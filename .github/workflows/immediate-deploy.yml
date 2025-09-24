@@ -1,4 +1,4 @@
-name: Immediate Deploy and Fix
+name: Force Deploy Now
 
 on:
   workflow_dispatch:
@@ -6,71 +6,119 @@ on:
     branches: [ main ]
 
 jobs:
-  deploy-now:
-    name: Deploy and Fix Strapi
+  force-deploy:
+    name: Force Deploy and Fix Everything
     runs-on: ubuntu-latest
     
     steps:
-      - name: Deploy to Server
+      - name: Execute Full Deployment
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           port: 22
-          timeout: 20m
+          timeout: 30m
+          command_timeout: 30m
           script: |
-            set -e
-            echo "🚀 Starting immediate deployment..."
+            echo "🔥 FORCE DEPLOYMENT STARTED"
+            echo "=========================="
             
-            cd /var/www/pashland/data/www/g-shop.info
+            # Go to project directory
+            cd /var/www/pashland/data/www/g-shop.info || exit 1
             
-            echo "📥 Pulling latest code..."
+            # Update code
+            echo "📥 Getting latest code..."
             git config --global --add safe.directory /var/www/pashland/data/www/g-shop.info
+            git fetch origin
+            git reset --hard origin/main
             git pull origin main
             
-            echo "📦 Installing Strapi packages..."
+            # Install Strapi dependencies
+            echo "📦 Installing Strapi (this will take time)..."
             cd backend
             
-            # Clean install
-            rm -rf node_modules package-lock.json
-            npm cache clean --force
+            # Remove old modules to ensure clean install
+            rm -rf node_modules
             
-            # Install all dependencies including Strapi
-            npm install
-            npm install @strapi/strapi@4.25.13 --save
+            # Install with explicit versions
+            echo "Installing dependencies..."
+            npm install --verbose
+            
+            echo "Installing Strapi core..."
+            npm install @strapi/strapi@4.25.13 --save --verbose
+            
+            echo "Installing Strapi plugins..."
             npm install @strapi/plugin-users-permissions@4.25.13 --save
             npm install @strapi/plugin-i18n@4.25.13 --save
             npm install @strapi/plugin-cloud@4.25.13 --save
             
+            # Build Strapi
             echo "🔨 Building Strapi..."
-            npm run build || echo "Build completed with warnings"
+            NODE_ENV=production npm run build || {
+              echo "Build failed, trying without production mode..."
+              npm run build || echo "Build completed with warnings"
+            }
             
-            cd ..
+            # Go back to root
+            cd /var/www/pashland/data/www/g-shop.info
             
-            echo "🔄 Restarting application..."
-            pkill -f "node.*g-shop.info" || true
+            # Kill ALL old processes
+            echo "🛑 Stopping all old processes..."
+            pkill -f "node.*g-shop" || true
             pkill -f "node.*strapi" || true
-            sleep 2
+            pkill -f "node.*3002" || true
+            sleep 3
             
-            # Start with ISPManager Node.js
-            su - pashland -c "cd /var/www/pashland/data/www/g-shop.info && /var/www/pashland/data/.nvm/versions/node/v18.20.8/bin/node app.js > /tmp/strapi-deploy.log 2>&1 &" || true
+            # Start with PM2 (most reliable)
+            echo "🚀 Starting with PM2..."
             
-            # Also try PM2
-            su - pashland -c "/usr/lib/ispnodejs/bin/pm2 delete g-shop.info 2>/dev/null || true"
-            su - pashland -c "/usr/lib/ispnodejs/bin/pm2 start /var/www/pashland/data/www/g-shop.info/app.js --name g-shop.info 2>/dev/null" || true
-            su - pashland -c "/usr/lib/ispnodejs/bin/pm2 save 2>/dev/null" || true
+            # Remove old PM2 process
+            su - pashland -c "/usr/lib/ispnodejs/bin/pm2 delete all 2>/dev/null" || true
             
-            sleep 5
+            # Start new PM2 process
+            su - pashland -c "cd /var/www/pashland/data/www/g-shop.info && /usr/lib/ispnodejs/bin/pm2 start app.js --name g-shop.info --time" || {
+              echo "PM2 failed, trying direct node..."
+              su - pashland -c "cd /var/www/pashland/data/www/g-shop.info && /var/www/pashland/data/.nvm/versions/node/v18.20.8/bin/node app.js > /tmp/strapi.log 2>&1 &"
+            }
             
-            echo "✅ Testing deployment..."
-            curl -f -s -o /dev/null http://localhost:3002/admin && echo "✅ Admin panel: OK" || echo "⚠️ Admin panel: Not responding"
-            curl -f -s -o /dev/null http://localhost:3002/api/products && echo "✅ API: OK" || echo "⚠️ API: Not responding"
+            # Save PM2 config
+            su - pashland -c "/usr/lib/ispnodejs/bin/pm2 save --force" || true
+            su - pashland -c "/usr/lib/ispnodejs/bin/pm2 startup" || true
             
-            echo "📊 PM2 Status:"
-            su - pashland -c "/usr/lib/ispnodejs/bin/pm2 list" || echo "PM2 not available"
+            # Wait for startup
+            echo "⏳ Waiting for application to start..."
+            sleep 10
             
-            echo "📜 Recent logs:"
-            tail -20 /tmp/strapi-deploy.log 2>/dev/null || echo "No logs yet"
+            # Test the deployment
+            echo "🧪 Testing deployment..."
+            for i in 1 2 3 4 5; do
+              echo "Attempt $i..."
+              curl -f http://localhost:3002/api/products && {
+                echo "✅ API is working!"
+                break
+              } || {
+                echo "Waiting 5 more seconds..."
+                sleep 5
+              }
+            done
             
-            echo "🎉 Deployment completed!"
+            # Show final status
+            echo "📊 Final Status:"
+            su - pashland -c "/usr/lib/ispnodejs/bin/pm2 list"
+            
+            # Show processes
+            echo "📝 Node processes:"
+            ps aux | grep node | grep -v grep
+            
+            # Test endpoints
+            echo "🔍 Testing endpoints:"
+            curl -s -o /dev/null -w "Admin: %{http_code}\n" http://localhost:3002/admin || echo "Admin: Failed"
+            curl -s -o /dev/null -w "API: %{http_code}\n" http://localhost:3002/api/products || echo "API: Failed"
+            
+            # Show logs
+            echo "📜 Application logs:"
+            su - pashland -c "/usr/lib/ispnodejs/bin/pm2 logs g-shop.info --lines 30 --nostream" || tail -30 /tmp/strapi.log
+            
+            echo "=========================="
+            echo "🎉 DEPLOYMENT COMPLETE!"

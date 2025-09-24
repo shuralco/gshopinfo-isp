@@ -1,0 +1,65 @@
+🚨 КОМАНДИ ДЛЯ ВИКОНАННЯ НА СЕРВЕРІ (через SSH як root)
+========================================================
+
+КРОК 1: ВИПРАВИТИ SSL ДЛЯ g-shop.com.ua
+----------------------------------------
+# Видалити конфліктну конфігурацію g-shop.info
+rm -f /etc/nginx/vhosts/pashland/g-shop.info.conf
+
+# Перезавантажити Nginx
+nginx -t && systemctl reload nginx
+
+# Перевірити чи працює g-shop.com.ua
+curl -I https://g-shop.com.ua/
+
+
+КРОК 2: ВСТАНОВИТИ STRAPI ДЛЯ g-shop.info
+------------------------------------------
+cd /var/www/pashland/data/www/g-shop.info
+
+# Оновити код
+git pull origin main
+
+# Встановити Strapi
+cd backend
+npm install @strapi/strapi@4.25.13 --save
+npm install @strapi/plugin-users-permissions@4.25.13 --save
+npm install @strapi/plugin-i18n@4.25.13 --save
+npm install @strapi/plugin-cloud@4.25.13 --save
+
+# Побудувати
+npm run build
+
+cd ..
+
+
+КРОК 3: ЗАПУСТИТИ g-shop.info
+------------------------------
+# Зупинити старі процеси
+pkill -f "node.*g-shop.info" || true
+
+# Запустити через ISPManager Node.js
+su - pashland -c "cd /var/www/pashland/data/www/g-shop.info && /var/www/pashland/data/.nvm/versions/node/v18.20.8/bin/node app.js > /tmp/strapi.log 2>&1 &"
+
+# АБО через PM2
+su - pashland -c "/usr/lib/ispnodejs/bin/pm2 delete g-shop.info 2>/dev/null"
+su - pashland -c "/usr/lib/ispnodejs/bin/pm2 start /var/www/pashland/data/www/g-shop.info/app.js --name g-shop.info"
+su - pashland -c "/usr/lib/ispnodejs/bin/pm2 save"
+
+
+КРОК 4: ПЕРЕВІРКА
+-----------------
+# Перевірити процеси
+ps aux | grep node | grep g-shop
+
+# Перевірити PM2
+su - pashland -c "/usr/lib/ispnodejs/bin/pm2 status"
+
+# Перевірити API
+curl http://localhost:3002/api/products
+
+# Перевірити логи
+tail -f /tmp/strapi.log
+
+========================================================
+ГОТОВО! Сайти мають працювати.
