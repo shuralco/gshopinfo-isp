@@ -1,0 +1,65 @@
+STRAPI ПРАЦЮЄ! Але потрібно налаштувати доступ.
+
+ВАРІАНТ 1: Налаштувати Nginx proxy (РЕКОМЕНДОВАНО)
+===================================================
+Створіть файл /etc/nginx/sites-available/g-shop.info:
+
+server {
+    listen 80;
+    server_name g-shop.info www.g-shop.info;
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name g-shop.info www.g-shop.info;
+    
+    # SSL certificates from ISPManager
+    ssl_certificate /var/www/httpd-cert/pashland/g-shop.info_le2.crtca;
+    ssl_certificate_key /var/www/httpd-cert/pashland/g-shop.info_le2.key;
+    
+    location / {
+        proxy_pass http://127.0.0.1:3002;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    
+    client_max_body_size 100M;
+}
+
+Потім:
+ln -s /etc/nginx/sites-available/g-shop.info /etc/nginx/sites-enabled/
+nginx -t
+systemctl reload nginx
+
+
+ВАРІАНТ 2: Використати ISPManager
+==================================
+1. Зайдіть в ISPManager панель
+2. Перейдіть до WWW-доменів
+3. Знайдіть g-shop.info
+4. Налаштуйте Node.js додаток:
+   - Порт: 3002
+   - Proxy: увімкнено
+5. Застосуйте зміни
+
+
+ВАРІАНТ 3: Запустити на стандартному порту
+===========================================
+Зупиніть поточний Strapi (Ctrl+C) і запустіть:
+PORT=80 npm run start
+
+АБО для HTTPS:
+PORT=443 npm run start
+
+
+ПЕРЕВІРКА
+=========
+curl https://g-shop.info/api/products
+curl https://g-shop.info/admin

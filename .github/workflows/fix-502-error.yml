@@ -1,0 +1,140 @@
+name: Fix 502 Error
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  fix-502:
+    name: Fix 502 and Start Strapi
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Fix 502 Error on Server
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: 22
+          timeout: 20m
+          script: |
+            echo "🔧 FIXING 502 ERROR"
+            echo "==================="
+            
+            # 1. Check if Strapi is running
+            echo "Checking current processes..."
+            ps aux | grep -E "strapi|npm.*start" | grep -v grep || echo "No Strapi running"
+            
+            # 2. Start Strapi in background with PM2
+            echo "Starting Strapi with PM2..."
+            cd /var/www/pashland/data/www/g-shop.info/backend
+            
+            # Kill any existing Strapi
+            pkill -f "strapi" || true
+            pkill -f "npm.*start" || true
+            sleep 2
+            
+            # Start with PM2 as pashland user
+            su - pashland -c "cd /var/www/pashland/data/www/g-shop.info/backend && PORT=3002 /usr/lib/ispnodejs/bin/pm2 delete strapi 2>/dev/null || true"
+            su - pashland -c "cd /var/www/pashland/data/www/g-shop.info/backend && PORT=3002 /usr/lib/ispnodejs/bin/pm2 start npm --name strapi -- start"
+            su - pashland -c "/usr/lib/ispnodejs/bin/pm2 save"
+            
+            sleep 5
+            
+            # 3. Fix Nginx configuration
+            echo "Configuring Nginx..."
+            
+            # Create proper Nginx config
+            cat > /etc/nginx/vhosts/pashland/g-shop.info.conf << 'NGINX'
+            server {
+                listen 80;
+                server_name g-shop.info www.g-shop.info;
+                return 301 https://$server_name$request_uri;
+            }
+            
+            server {
+                listen 443 ssl http2;
+                server_name g-shop.info www.g-shop.info;
+                
+                ssl_certificate /var/www/httpd-cert/pashland/g-shop.info_le2.crtca;
+                ssl_certificate_key /var/www/httpd-cert/pashland/g-shop.info_le2.key;
+                
+                access_log /var/www/httpd-logs/g-shop.info.access.log;
+                error_log /var/www/httpd-logs/g-shop.info.error.log;
+                
+                location / {
+                    proxy_pass http://127.0.0.1:3002;
+                    proxy_http_version 1.1;
+                    proxy_set_header Upgrade $http_upgrade;
+                    proxy_set_header Connection 'upgrade';
+                    proxy_set_header Host $host;
+                    proxy_cache_bypass $http_upgrade;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+                }
+                
+                location /api {
+                    proxy_pass http://127.0.0.1:3002/api;
+                    proxy_http_version 1.1;
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+                }
+                
+                location /admin {
+                    proxy_pass http://127.0.0.1:3002/admin;
+                    proxy_http_version 1.1;
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+                }
+                
+                location /uploads {
+                    proxy_pass http://127.0.0.1:3002/uploads;
+                    proxy_http_version 1.1;
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+                }
+                
+                client_max_body_size 100M;
+            }
+            NGINX
+            
+            # Test Nginx config
+            nginx -t
+            
+            # Reload Nginx
+            systemctl reload nginx
+            
+            # 4. Test everything
+            echo ""
+            echo "Testing..."
+            sleep 3
+            
+            # Test local Strapi
+            echo "Local Strapi test:"
+            curl -s -o /dev/null -w "http://localhost:3002/api/products - %{http_code}\n" http://localhost:3002/api/products
+            curl -s -o /dev/null -w "http://localhost:3002/admin - %{http_code}\n" http://localhost:3002/admin
+            
+            # Test through Nginx
+            echo ""
+            echo "Through Nginx test:"
+            curl -s -o /dev/null -w "https://g-shop.info/api/products - %{http_code}\n" https://g-shop.info/api/products
+            curl -s -o /dev/null -w "https://g-shop.info/admin - %{http_code}\n" https://g-shop.info/admin
+            
+            # Show PM2 status
+            echo ""
+            echo "PM2 Status:"
+            su - pashland -c "/usr/lib/ispnodejs/bin/pm2 list"
+            
+            echo ""
+            echo "==================="
+            echo "✅ 502 ERROR FIXED!"
+            echo "Site should be available at https://g-shop.info"
