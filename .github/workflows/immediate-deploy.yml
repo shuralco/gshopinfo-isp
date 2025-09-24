@@ -78,8 +78,13 @@ jobs:
             
             # Start new PM2 process
             su - pashland -c "cd /var/www/pashland/data/www/g-shop.info && /usr/lib/ispnodejs/bin/pm2 start app.js --name g-shop.info --time" || {
-              echo "PM2 failed, trying direct node..."
-              su - pashland -c "cd /var/www/pashland/data/www/g-shop.info && /var/www/pashland/data/.nvm/versions/node/v18.20.8/bin/node app.js > /tmp/strapi.log 2>&1 &"
+              echo "PM2 failed, trying direct Strapi start..."
+              cd /var/www/pashland/data/www/g-shop.info/backend
+              export NODE_ENV=production
+              export HOST=0.0.0.0
+              export PORT=3002
+              nohup /var/www/pashland/data/.nvm/versions/node/v18.20.8/bin/npm run start > /tmp/strapi.log 2>&1 &
+              echo "Started Strapi directly with npm run start"
             }
             
             # Save PM2 config
