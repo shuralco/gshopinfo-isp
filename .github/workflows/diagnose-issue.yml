@@ -1,0 +1,116 @@
+name: Diagnose and Fix Issue
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  diagnose:
+    name: Diagnose Server Issue
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: SSH Diagnostic Investigation
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: 22
+          timeout: 20m
+          script: |
+            echo "🔍 DIAGNOSTIC INVESTIGATION"
+            echo "==========================="
+            echo ""
+            
+            echo "1️⃣ Check if project exists:"
+            ls -la /var/www/pashland/data/www/g-shop.info/ | head -5
+            echo ""
+            
+            echo "2️⃣ Check if backend exists:"
+            ls -la /var/www/pashland/data/www/g-shop.info/backend/ | head -10
+            echo ""
+            
+            echo "3️⃣ Check if Strapi is installed:"
+            ls -la /var/www/pashland/data/www/g-shop.info/backend/node_modules/@strapi/ 2>/dev/null || echo "❌ @strapi folder not found!"
+            echo ""
+            
+            echo "4️⃣ Check package.json:"
+            cat /var/www/pashland/data/www/g-shop.info/backend/package.json | grep -A2 -B2 strapi
+            echo ""
+            
+            echo "5️⃣ Check app.js:"
+            head -50 /var/www/pashland/data/www/g-shop.info/app.js
+            echo ""
+            
+            echo "6️⃣ Try to start app.js and see error:"
+            cd /var/www/pashland/data/www/g-shop.info
+            timeout 5s /var/www/pashland/data/.nvm/versions/node/v18.20.8/bin/node app.js 2>&1 || true
+            echo ""
+            
+            echo "7️⃣ Check if port 3002 is in use:"
+            netstat -tulpn | grep 3002 || echo "Port 3002 is free"
+            lsof -i:3002 2>/dev/null || echo "Nothing on port 3002"
+            echo ""
+            
+            echo "8️⃣ Check Node.js processes:"
+            ps aux | grep node | grep -v grep || echo "No node processes"
+            echo ""
+            
+            echo "9️⃣ Check PM2 status:"
+            su - pashland -c "/usr/lib/ispnodejs/bin/pm2 list" || echo "PM2 not available"
+            echo ""
+            
+            echo "🔟 Check recent logs:"
+            tail -20 /tmp/strapi*.log 2>/dev/null || echo "No strapi logs"
+            echo ""
+            
+            echo "1️⃣1️⃣ Try to install Strapi if missing:"
+            cd /var/www/pashland/data/www/g-shop.info/backend
+            if [ ! -d "node_modules/@strapi/strapi" ]; then
+              echo "Installing Strapi..."
+              npm install @strapi/strapi@4.25.13 --save
+              npm install @strapi/plugin-users-permissions@4.25.13 --save
+              npm install @strapi/plugin-i18n@4.25.13 --save
+              npm install @strapi/plugin-cloud@4.25.13 --save
+            else
+              echo "Strapi already installed"
+            fi
+            echo ""
+            
+            echo "1️⃣2️⃣ Try direct Strapi start:"
+            cd /var/www/pashland/data/www/g-shop.info/backend
+            export NODE_ENV=production
+            export HOST=0.0.0.0
+            export PORT=3002
+            
+            # Kill any existing process on port 3002
+            pkill -f "node.*3002" || true
+            fuser -k 3002/tcp 2>/dev/null || true
+            sleep 2
+            
+            # Try to start Strapi
+            echo "Starting Strapi..."
+            nohup /var/www/pashland/data/.nvm/versions/node/v18.20.8/bin/npm run start > /tmp/strapi-diag.log 2>&1 &
+            STRAPI_PID=$!
+            echo "Started with PID: $STRAPI_PID"
+            
+            # Wait for startup
+            sleep 10
+            
+            echo "1️⃣3️⃣ Check if Strapi started:"
+            ps -p $STRAPI_PID > /dev/null && echo "✅ Process is running" || echo "❌ Process died"
+            
+            echo "1️⃣4️⃣ Check port again:"
+            netstat -tulpn | grep 3002 || echo "❌ Port 3002 still not listening"
+            
+            echo "1️⃣5️⃣ Show startup logs:"
+            tail -50 /tmp/strapi-diag.log
+            
+            echo "1️⃣6️⃣ Test API:"
+            curl -v http://localhost:3002/api/products 2>&1 | head -20
+            
+            echo ""
+            echo "==========================="
+            echo "📊 DIAGNOSTIC COMPLETE"
