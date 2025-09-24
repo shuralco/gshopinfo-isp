@@ -167,6 +167,13 @@ isp-config.js
 app.js
 
 # =========================
+# MCP Servers (submodules)
+# =========================
+playwright-mcp/
+superdesign-mcp-claude-code/
+.mcp.json
+
+# =========================
 # Temporary Files
 # =========================
 tmp/
