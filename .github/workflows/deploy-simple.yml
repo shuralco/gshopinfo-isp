@@ -1,0 +1,148 @@
+name: Simple Deploy to ISPManager
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  SERVER_HOST: ${{ secrets.SERVER_HOST }}
+  SERVER_USER: ${{ secrets.SERVER_USER }}
+  SERVER_PASSWORD: ${{ secrets.SERVER_PASSWORD }}
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: 📦 Install sshpass
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sshpass rsync
+
+      - name: 🧪 Test SSH connection
+        run: |
+          sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo 'SSH connection successful'"
+
+      - name: 📦 Build backend
+        run: |
+          cd backend
+          npm ci
+          npm run build
+          cd ..
+
+      - name: 🚀 Deploy to server
+        run: |
+          echo "Deploying to ISPManager..."
+          
+          # Create deployment script
+          cat > deploy.sh << 'DEPLOY_SCRIPT'
+          #!/bin/bash
+          set -e
+          
+          DEPLOY_PATH="/var/www/pashland/data/www/g-shop.info"
+          BACKUP_PATH="/var/www/pashland/backups/gshop"
+          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          
+          # Create backup directory
+          mkdir -p ${BACKUP_PATH}
+          
+          # Backup database if exists
+          if [ -f "${DEPLOY_PATH}/backend/database.db" ]; then
+            cp "${DEPLOY_PATH}/backend/database.db" "${BACKUP_PATH}/db_${TIMESTAMP}.db" || true
+          fi
+          
+          # Backup uploads if exists
+          if [ -d "${DEPLOY_PATH}/backend/public/uploads" ]; then
+            tar -czf "${BACKUP_PATH}/uploads_${TIMESTAMP}.tar.gz" -C "${DEPLOY_PATH}/backend/public" uploads || true
+          fi
+          
+          # Backup env if exists
+          if [ -f "${DEPLOY_PATH}/backend/.env" ]; then
+            cp "${DEPLOY_PATH}/backend/.env" "${BACKUP_PATH}/env_${TIMESTAMP}" || true
+          fi
+          
+          # Create deployment directory if not exists
+          mkdir -p ${DEPLOY_PATH}
+          
+          echo "Deployment preparation complete"
+          DEPLOY_SCRIPT
+          
+          # Execute preparation script
+          sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} 'bash -s' < deploy.sh
+          
+          # Sync files
+          echo "Syncing files..."
+          sshpass -p "${{ secrets.SERVER_PASSWORD }}" rsync -avz --delete \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            --exclude='.env*' \
+            --exclude='*.db*' \
+            --exclude='uploads' \
+            --exclude='.cache' \
+            --exclude='.tmp' \
+            -e "ssh -o StrictHostKeyChecking=no" \
+            ./ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/var/www/pashland/data/www/g-shop.info/
+          
+          # Install dependencies and restart on server
+          sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'REMOTE_CMD'
+          set -e
+          
+          DEPLOY_PATH="/var/www/pashland/data/www/g-shop.info"
+          cd ${DEPLOY_PATH}/backend
+          
+          # Install dependencies
+          npm ci --production
+          
+          # Restore env if not exists
+          if [ ! -f ".env" ]; then
+            LATEST_ENV=$(ls -t /var/www/pashland/backups/gshop/env_* 2>/dev/null | head -1)
+            if [ -f "$LATEST_ENV" ]; then
+              cp "$LATEST_ENV" .env
+            fi
+          fi
+          
+          # Restore database if not exists
+          if [ ! -f "database.db" ]; then
+            LATEST_DB=$(ls -t /var/www/pashland/backups/gshop/db_*.db 2>/dev/null | head -1)
+            if [ -f "$LATEST_DB" ]; then
+              cp "$LATEST_DB" database.db
+            fi
+          fi
+          
+          # Set permissions
+          chown -R pashland:pashland ${DEPLOY_PATH}
+          
+          # Restart application
+          pkill -f "node.*g-shop.info" || true
+          sleep 2
+          
+          # Try ISPManager restart
+          if [ -f "/usr/local/mgr5/sbin/mgrctl" ]; then
+            /usr/local/mgr5/sbin/mgrctl -m ispmgr nodeapp.restart elid=g-shop.info || true
+          fi
+          
+          # Fallback to manual start
+          if ! pgrep -f "node.*g-shop.info" > /dev/null; then
+            cd ${DEPLOY_PATH}
+            su - pashland -c "cd ${DEPLOY_PATH} && nohup node app.js > /dev/null 2>&1 &"
+          fi
+          
+          echo "Deployment complete!"
+          REMOTE_CMD
+
+      - name: 🏥 Health check
+        run: |
+          sleep 10
+          curl -f https://g-shop.info/api || echo "API check failed"
+          echo "Deployment finished!"
