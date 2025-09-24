@@ -1,0 +1,36 @@
+name: Test SSH Connection
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: Test SSH Connection
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Install sshpass
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sshpass
+      
+      - name: Debug secrets
+        run: |
+          echo "Testing if secrets are available..."
+          echo "SERVER_HOST exists: ${{ secrets.SERVER_HOST && 'YES' || 'NO' }}"
+          echo "SERVER_USER exists: ${{ secrets.SERVER_USER && 'YES' || 'NO' }}"
+          echo "SERVER_PASSWORD exists: ${{ secrets.SERVER_PASSWORD && 'YES' || 'NO' }}"
+          
+      - name: Test direct connection
+        run: |
+          echo "Testing SSH connection to ${{ secrets.SERVER_HOST }}..."
+          sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -v -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo 'SUCCESS: Connected to server'; hostname; pwd; whoami" || echo "FAILED: Could not connect"
+      
+      - name: Test with hardcoded values (fallback)
+        if: failure()
+        run: |
+          echo "Testing with hardcoded values..."
+          sshpass -p "qaqa1234" ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 root@167.235.7.222 "echo 'Connected with hardcoded values'" || echo "Still failed with hardcoded values"
