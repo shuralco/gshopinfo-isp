@@ -34,7 +34,7 @@ jobs:
         run: |
           echo "Building backend..."
           cd backend
-          npm ci
+          npm ci || npm install
           npm run build
           cd ..
           echo "Build completed"
@@ -84,7 +84,7 @@ jobs:
           # Install backend dependencies
           echo "Installing backend dependencies..."
           cd backend
-          npm ci --production
+          npm ci --production || npm install --production
           
           # Create .env file if not exists
           if [ ! -f ".env" ]; then

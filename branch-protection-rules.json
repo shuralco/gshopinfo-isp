@@ -1,0 +1,92 @@
+{
+  "branch": "production",
+  "protection_rules": {
+    "recommended_safe": {
+      "description": "Рекомендовані правила для production з можливістю direct push",
+      "settings": {
+        "required_status_checks": {
+          "strict": false,
+          "contexts": ["Test SSH Connection"]
+        },
+        "enforce_admins": false,
+        "required_pull_request_reviews": null,
+        "dismiss_stale_reviews": false,
+        "require_code_owner_reviews": false,
+        "required_approving_review_count": 0,
+        "restrictions": null,
+        "allow_force_pushes": false,
+        "allow_deletions": false,
+        "block_creations": false,
+        "required_conversation_resolution": false,
+        "lock_branch": false,
+        "allow_fork_syncing": false
+      }
+    },
+    "strict_with_bypass": {
+      "description": "Строгі правила з можливістю обходу для адміна",
+      "settings": {
+        "required_status_checks": {
+          "strict": true,
+          "contexts": [
+            "Test SSH Connection",
+            "Deploy to Production"
+          ]
+        },
+        "enforce_admins": false,
+        "required_pull_request_reviews": {
+          "required_approving_review_count": 1,
+          "dismiss_stale_reviews": true,
+          "require_code_owner_reviews": false,
+          "bypass_pull_request_allowances": {
+            "users": ["shuralco"],
+            "teams": []
+          }
+        },
+        "restrictions": null,
+        "allow_force_pushes": false,
+        "allow_deletions": false
+      }
+    },
+    "minimal": {
+      "description": "Мінімальні правила - тільки захист від видалення",
+      "settings": {
+        "required_status_checks": null,
+        "enforce_admins": false,
+        "required_pull_request_reviews": null,
+        "restrictions": null,
+        "allow_force_pushes": false,
+        "allow_deletions": false,
+        "block_creations": false,
+        "required_conversation_resolution": false,
+        "lock_branch": false
+      }
+    }
+  },
+  "github_ui_setup": {
+    "steps": [
+      "1. Перейдіть на: https://github.com/shuralco/gshopinfo-isp/settings/branches",
+      "2. Натисніть 'Add rule' або 'Add branch protection rule'",
+      "3. В поле 'Branch name pattern' введіть: production",
+      "4. Виберіть налаштування відповідно до одного з варіантів вище",
+      "5. Натисніть 'Create' або 'Save changes'"
+    ],
+    "quick_setup_minimal": [
+      "Branch name pattern: production",
+      "☐ Require a pull request before merging - ВИМКНЕНО",
+      "☐ Require status checks to pass before merging - ВИМКНЕНО",
+      "☑ Do not allow bypassing the above settings - УВІМКНЕНО",
+      "☑ Restrict who can push to matching branches - ВИМКНЕНО",
+      "Save"
+    ]
+  },
+  "github_cli_setup": {
+    "install": "gh auth login",
+    "create_rule": "gh api repos/shuralco/gshopinfo-isp/branches/production/protection --method PUT --field enforce_admins=false --field required_status_checks=null --field required_pull_request_reviews=null --field restrictions=null"
+  },
+  "secrets_required": {
+    "SERVER_HOST": "167.235.7.222",
+    "SERVER_USER": "root",
+    "SERVER_PASSWORD": "qaqa1234",
+    "GITHUB_TOKEN": "Створіть на https://github.com/settings/tokens з правами repo, workflow"
+  }
+}
