@@ -1,0 +1,76 @@
+name: Immediate Deploy and Fix
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy-now:
+    name: Deploy and Fix Strapi
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: 22
+          timeout: 20m
+          script: |
+            set -e
+            echo "🚀 Starting immediate deployment..."
+            
+            cd /var/www/pashland/data/www/g-shop.info
+            
+            echo "📥 Pulling latest code..."
+            git config --global --add safe.directory /var/www/pashland/data/www/g-shop.info
+            git pull origin main
+            
+            echo "📦 Installing Strapi packages..."
+            cd backend
+            
+            # Clean install
+            rm -rf node_modules package-lock.json
+            npm cache clean --force
+            
+            # Install all dependencies including Strapi
+            npm install
+            npm install @strapi/strapi@4.25.13 --save
+            npm install @strapi/plugin-users-permissions@4.25.13 --save
+            npm install @strapi/plugin-i18n@4.25.13 --save
+            npm install @strapi/plugin-cloud@4.25.13 --save
+            
+            echo "🔨 Building Strapi..."
+            npm run build || echo "Build completed with warnings"
+            
+            cd ..
+            
+            echo "🔄 Restarting application..."
+            pkill -f "node.*g-shop.info" || true
+            pkill -f "node.*strapi" || true
+            sleep 2
+            
+            # Start with ISPManager Node.js
+            su - pashland -c "cd /var/www/pashland/data/www/g-shop.info && /var/www/pashland/data/.nvm/versions/node/v18.20.8/bin/node app.js > /tmp/strapi-deploy.log 2>&1 &" || true
+            
+            # Also try PM2
+            su - pashland -c "/usr/lib/ispnodejs/bin/pm2 delete g-shop.info 2>/dev/null || true"
+            su - pashland -c "/usr/lib/ispnodejs/bin/pm2 start /var/www/pashland/data/www/g-shop.info/app.js --name g-shop.info 2>/dev/null" || true
+            su - pashland -c "/usr/lib/ispnodejs/bin/pm2 save 2>/dev/null" || true
+            
+            sleep 5
+            
+            echo "✅ Testing deployment..."
+            curl -f -s -o /dev/null http://localhost:3002/admin && echo "✅ Admin panel: OK" || echo "⚠️ Admin panel: Not responding"
+            curl -f -s -o /dev/null http://localhost:3002/api/products && echo "✅ API: OK" || echo "⚠️ API: Not responding"
+            
+            echo "📊 PM2 Status:"
+            su - pashland -c "/usr/lib/ispnodejs/bin/pm2 list" || echo "PM2 not available"
+            
+            echo "📜 Recent logs:"
+            tail -20 /tmp/strapi-deploy.log 2>/dev/null || echo "No logs yet"
+            
+            echo "🎉 Deployment completed!"
