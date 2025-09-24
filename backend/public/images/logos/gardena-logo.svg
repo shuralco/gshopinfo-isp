@@ -1,0 +1,19 @@
+<svg viewBox="0 0 240 60" xmlns="http://www.w3.org/2000/svg">
+  <!-- Gardena brand logo - professional representation -->
+  <defs>
+    <linearGradient id="gardenaGreen" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#00b359;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#00994d;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Logo background shape -->
+  <rect x="5" y="10" width="230" height="40" rx="20" fill="url(#gardenaGreen)"/>
+  
+  <!-- Brand text -->
+  <text x="120" y="36" text-anchor="middle" fill="white" font-family="'Segoe UI', Arial, sans-serif" font-size="24" font-weight="700" letter-spacing="1">GARDENA</text>
+  
+  <!-- Decorative element -->
+  <circle cx="25" cy="30" r="8" fill="white" opacity="0.9"/>
+  <path d="M25 26 L25 34 M21 30 L29 30" stroke="#00994d" stroke-width="2" stroke-linecap="round"/>
+</svg>

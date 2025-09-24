@@ -1,0 +1,8 @@
+<svg width="300" height="200" xmlns="http://www.w3.org/2000/svg">
+  <rect width="100%" height="100%" fill="#f0f0f0"/>
+  <rect x="60" y="90" width="180" height="60" fill="#E3671D" rx="5"/>
+  <text x="150" y="125" text-anchor="middle" fill="white" font-family="Arial" font-size="12">LC 353V Mower</text>
+  <rect x="70" y="70" width="160" height="20" fill="#333" rx="3"/>
+  <circle cx="90" cy="170" r="15" fill="#333"/>
+  <circle cx="210" cy="170" r="15" fill="#333"/>
+</svg>

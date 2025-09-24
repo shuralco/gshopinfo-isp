@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+    environment:
+      NODE_ENV: production
+      PORT: 1337
+      HOST: 0.0.0.0
+      APP_KEYS: "pashlandKey1,pashlandKey2,pashlandKey3"
+      API_TOKEN_SALT: "pashlandSalt"
+      ADMIN_JWT_SECRET: "pashlandAdminJwtSecret"
+      JWT_SECRET: "pashlandJwtSecret"
+    volumes:
+      - backend-uploads:/srv/app/public/uploads
+      - backend-data:/srv/app/.tmp
+    ports:
+      - "1337:1337"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend/Dockerfile
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+
+volumes:
+  backend-uploads:
+  backend-data:

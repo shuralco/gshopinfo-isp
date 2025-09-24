@@ -1,0 +1,115 @@
+name: Test Server Connection
+
+on:
+  workflow_dispatch:
+    inputs:
+      command:
+        description: 'Command to run on server (optional)'
+        required: false
+        default: 'echo "Connection test successful!" && date'
+
+jobs:
+  test-connection:
+    name: Test SSH Connection to ISPManager
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    
+    steps:
+      - name: 🔑 Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          
+          # Add to known hosts if available
+          if [ -n "${{ secrets.KNOWN_HOSTS }}" ]; then
+            echo "${{ secrets.KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
+          else
+            ssh-keyscan -H ${{ secrets.SERVER_HOST || '167.235.7.222' }} >> ~/.ssh/known_hosts
+          fi
+
+      - name: 🧪 Test Connection
+        run: |
+          echo "Testing SSH connection to server..."
+          ssh -i ~/.ssh/deploy_key \
+              -o StrictHostKeyChecking=no \
+              -o ConnectTimeout=10 \
+              root@${{ secrets.SERVER_HOST || '167.235.7.222' }} \
+              "${{ github.event.inputs.command }}"
+
+      - name: 📊 Server Information
+        run: |
+          ssh -i ~/.ssh/deploy_key root@${{ secrets.SERVER_HOST || '167.235.7.222' }} << 'EOF'
+          echo "=== Server Information ==="
+          echo "Hostname: $(hostname)"
+          echo "OS: $(cat /etc/os-release | grep PRETTY_NAME | cut -d'"' -f2)"
+          echo "Kernel: $(uname -r)"
+          echo "Uptime: $(uptime)"
+          echo ""
+          echo "=== Node.js Information ==="
+          if command -v node &> /dev/null; then
+            echo "Node Version: $(node --version)"
+            echo "NPM Version: $(npm --version)"
+          else
+            echo "Node.js not found in PATH"
+          fi
+          echo ""
+          echo "=== Project Status ==="
+          PROJECT_PATH="/var/www/pashland/data/www/g-shop.info"
+          if [ -d "$PROJECT_PATH" ]; then
+            echo "Project directory exists"
+            echo "Directory contents:"
+            ls -la "$PROJECT_PATH" | head -10
+            
+            if [ -f "$PROJECT_PATH/backend/.env" ]; then
+              echo "✓ Backend .env file exists"
+            else
+              echo "✗ Backend .env file missing"
+            fi
+            
+            if [ -f "$PROJECT_PATH/backend/database.db" ]; then
+              echo "✓ Database exists"
+              echo "  Size: $(du -h $PROJECT_PATH/backend/database.db | cut -f1)"
+            else
+              echo "✗ Database missing"
+            fi
+            
+            if [ -d "$PROJECT_PATH/backend/public/uploads" ]; then
+              echo "✓ Uploads directory exists"
+              echo "  Files: $(find $PROJECT_PATH/backend/public/uploads -type f | wc -l)"
+            else
+              echo "✗ Uploads directory missing"
+            fi
+            
+            # Check if app is running
+            if pgrep -f "node.*g-shop.info" > /dev/null; then
+              echo "✓ Node.js process is running"
+              echo "  PID: $(pgrep -f "node.*g-shop.info")"
+            else
+              echo "✗ Node.js process not running"
+            fi
+            
+            # Check socket
+            SOCKET_PATH="/var/www/pashland/data/nodejs/0.sock"
+            if [ -S "$SOCKET_PATH" ]; then
+              echo "✓ Socket file exists"
+            else
+              echo "✗ Socket file missing"
+            fi
+          else
+            echo "Project directory does not exist"
+          fi
+          echo ""
+          echo "=== ISPManager Status ==="
+          if [ -f "/usr/local/mgr5/sbin/mgrctl" ]; then
+            echo "ISPManager is installed"
+            /usr/local/mgr5/sbin/mgrctl -m ispmgr nodeapp.list 2>/dev/null | grep g-shop || echo "App not configured in ISPManager"
+          else
+            echo "ISPManager not found"
+          fi
+          EOF
+
+      - name: 🧹 Cleanup
+        if: always()
+        run: |
+          rm -f ~/.ssh/deploy_key

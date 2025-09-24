@@ -1,0 +1,224 @@
+# =========================
+# Node.js & NPM
+# =========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# =========================
+# Environment & Configuration
+# =========================
+.env
+.env.*
+!.env.example
+config/local.js
+config/environments/*/database.json
+
+# =========================
+# Database
+# =========================
+*.db
+*.sqlite
+*.sqlite3
+.tmp/
+data.db
+database.db
+backend/.tmp/
+backend/database/
+
+# =========================
+# Build & Generated Files
+# =========================
+build/
+dist/
+.next/
+out/
+.cache/
+.nuxt/
+*.build.js
+*.build.js.map
+frontend/generated/
+public/build/
+public/uploads/
+backend/build/
+backend/public/uploads/
+backend/.cache/
+backend/exports/
+
+# =========================
+# Strapi Specific
+# =========================
+backend/.strapi-updater.json
+backend/license.txt
+backend/.strapi/
+backend/public/uploads/
+backend/exports/
+backend/.cache/
+
+# =========================
+# Logs
+# =========================
+*.log
+logs/
+*.log.*
+logs-*.json
+backend/logs/
+
+# =========================
+# IDE & Editor
+# =========================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+.project
+.classpath
+.settings/
+*.sublime-*
+.claude/
+
+# =========================
+# Testing
+# =========================
+coverage/
+.nyc_output/
+test-results/
+jest-results/
+cypress/videos/
+cypress/screenshots/
+playwright-report/
+test-results/
+screenshots/
+screenshots_*/
+*.png
+*.jpg
+*.jpeg
+!public/**/*.png
+!public/**/*.jpg
+!public/**/*.jpeg
+!frontend/public/**/*.png
+!frontend/public/**/*.jpg
+!frontend/public/**/*.jpeg
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# =========================
+# Deployment & DevOps
+# =========================
+*.tar.gz
+*.zip
+backup*/
+backups/
+deployment-*/
+gardena-deployment-*/
+*.sock
+pm2.json
+ecosystem.config.js
+ssh_config
+*.exp
+access
+
+# =========================
+# Python & Scripts
+# =========================
+*.py
+*.sh
+!scripts/*.sh
+!deploy*.sh
+*.html
+test_*.py
+check-*.py
+fix-*.py
+update-*.py
+restore-*.py
+*-fix.py
+*-test.py
+admin_test*.py
+visual_test*.py
+complete_*.py
+
+# =========================
+# Documentation (temp files)
+# =========================
+UPDATE_API_URL.sh
+DEPLOY_COMMANDS.txt
+admin_final_instructions.md
+mobile-logo-fix.css
+brand-logo-component.html
+BrandLogoComponent.jsx
+BrandLogoComponent.css
+
+# =========================
+# ISPManager Specific
+# =========================
+simple-app.js
+isp-config.js
+app.js
+
+# =========================
+# Temporary Files
+# =========================
+tmp/
+temp/
+*.tmp
+.temp/
+*.bak
+*.backup
+*.old
+
+# =========================
+# OS Files
+# =========================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# =========================
+# Security
+# =========================
+*.pem
+*.key
+*.crt
+*.p12
+private/
+secrets/
+
+# =========================
+# Docker
+# =========================
+docker/backend/uploads/
+docker/backend/database/
+
+# =========================
+# Keep Important Files
+# =========================
+!.gitignore
+!README.md
+!package.json
+!backend/package.json
+!frontend/package.json
+!docker-compose.yml
+!nginx.conf
+!nginx_optimal.conf
+!DEPLOYMENT.md
+!NGINX_CONFIGURATION_ANALYSIS.md
+!INFINITE_SPINNER_ANALYSIS.md
+!ISPMANAGER_SETUP_GUIDE.md
+!DEPLOY_ISP.md
+!.github/workflows/

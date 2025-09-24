@@ -1,0 +1,335 @@
+{
+  "kind": "singleType",
+  "collectionName": "site_settings",
+  "info": {
+    "singularName": "site-setting",
+    "pluralName": "site-settings",
+    "displayName": "Site Settings",
+    "description": "Налаштування сайту"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "site_name": {
+      "type": "string",
+      "default": "G-Shop",
+      "required": true
+    },
+    "site_tagline": {
+      "type": "string",
+      "default": "Офіційний дилер провідних брендів"
+    },
+    "meta_title": {
+      "type": "string",
+      "default": "G-Shop - Gardena, Fiskars, Husqvarna | Офіційний дилер в Україні"
+    },
+    "meta_description": {
+      "type": "text",
+      "default": "Garden Tech - Офіційний імпортер Gardena, Fiskars та Husqvarna в Україні. Професійні рішення для саду та городу."
+    },
+    "logo_url": {
+      "type": "string",
+      "default": "https://g-shop.com.ua/image/catalog/g-shop_new_logo.png"
+    },
+    "nav_home": {
+      "type": "string",
+      "default": "Головна"
+    },
+    "nav_products": {
+      "type": "string",
+      "default": "Товари"
+    },
+    "nav_brands": {
+      "type": "string",
+      "default": "Бренди"
+    },
+    "nav_about": {
+      "type": "string",
+      "default": "Про нас"
+    },
+    "nav_contacts": {
+      "type": "string",
+      "default": "Контакти"
+    },
+    "footer_copyright": {
+      "type": "text",
+      "default": "© 2024 Garden Tech. Всі права захищені."
+    },
+    "footer_description": {
+      "type": "text",
+      "default": "Офіційний дилер провідних світових брендів садової техніки. Професійні рішення для вашого саду."
+    },
+    "phone": {
+      "type": "string",
+      "default": "+38 (050) 300-04-04"
+    },
+    "email": {
+      "type": "string",
+      "default": "info@gardentech.com.ua"
+    },
+    "address": {
+      "type": "string",
+      "default": "м. Київ, вул. Хрещатик, 1"
+    },
+    "working_hours": {
+      "type": "string",
+      "default": "Пн-Пт: 9:00 - 18:00"
+    },
+    "popular_products_title": {
+      "type": "string",
+      "default": "Популярні товари"
+    },
+    "testimonials_badge": {
+      "type": "string",
+      "default": "Відгуки клієнтів"
+    },
+    "testimonials_title": {
+      "type": "string",
+      "default": "Відгуки наших клієнтів"
+    },
+    "testimonials_subtitle": {
+      "type": "string",
+      "default": "Понад 10 000 задоволених клієнтів по всій Україні довіряють нам турботу про свої сади"
+    },
+    "years_experience": {
+      "type": "integer",
+      "default": 15
+    },
+    "happy_customers": {
+      "type": "integer",
+      "default": 10000
+    },
+    "official_dealer_title": {
+      "type": "string",
+      "default": "Офіційний дилер"
+    },
+    "get_discount_button": {
+      "type": "string",
+      "default": "Отримати знижку"
+    },
+    "features_badge": {
+      "type": "string",
+      "default": "Наші переваги"
+    },
+    "features_title": {
+      "type": "string",
+      "default": "Чому обирають нас"
+    },
+    "features_subtitle": {
+      "type": "string",
+      "default": "Довіра тисяч клієнтів і роки досвіду роботи з найкращими світовими брендами садової техніки"
+    },
+    "contact_title": {
+      "type": "string",
+      "default": "Зв'яжіться з нами"
+    },
+    "contact_subtitle": {
+      "type": "text",
+      "default": "Маєте питання або потребуєте консультації? Ми завжди раді допомогти вам обрати найкраще рішення для вашого саду"
+    },
+    "form_title": {
+      "type": "string",
+      "default": "Залишити заявку"
+    },
+    "form_name_label": {
+      "type": "string",
+      "default": "Ваше ім'я *"
+    },
+    "form_phone_label": {
+      "type": "string",
+      "default": "Телефон *"
+    },
+    "form_email_label": {
+      "type": "string",
+      "default": "Email *"
+    },
+    "form_subject_label": {
+      "type": "string",
+      "default": "Тема звернення"
+    },
+    "form_message_label": {
+      "type": "string",
+      "default": "Повідомлення"
+    },
+    "form_submit_button": {
+      "type": "string",
+      "default": "Відправити заявку"
+    },
+    "form_name_placeholder": {
+      "type": "string",
+      "default": "Іван"
+    },
+    "form_phone_placeholder": {
+      "type": "string",
+      "default": "+38 (0__) ___-__-__"
+    },
+    "form_email_placeholder": {
+      "type": "string",
+      "default": "ivan@example.com"
+    },
+    "form_message_placeholder": {
+      "type": "string",
+      "default": "Розкажіть про ваше питання..."
+    },
+    "form_option_1": {
+      "type": "string",
+      "default": "Консультація щодо товару"
+    },
+    "form_option_2": {
+      "type": "string",
+      "default": "Питання про доставку"
+    },
+    "form_option_3": {
+      "type": "string",
+      "default": "Гарантійне обслуговування"
+    },
+    "form_option_4": {
+      "type": "string",
+      "default": "Співпраця"
+    },
+    "form_option_5": {
+      "type": "string",
+      "default": "Інше"
+    },
+    "gardena_description": {
+      "type": "text",
+      "default": "Німецька якість та інновації в садовій техніці. Gardena - світовий лідер у виробництві систем поливу та садового інструменту для професіоналів та аматорів."
+    },
+    "fiskars_description": {
+      "type": "text", 
+      "default": "Фінська надійність та ергономіка в кожному інструменті. Fiskars - це понад 370 років традицій виробництва найкращих садових інструментів та приладдя."
+    },
+    "husqvarna_description": {
+      "type": "text",
+      "default": "Шведська потужність та інновації в професійній садовій техніці. Husqvarna - більше 330 років досвіду створення найнадійнішої техніки для лісового та садового господарства."
+    },
+    "happy_customers_label": {
+      "type": "string",
+      "default": "Задоволених клієнтів"
+    },
+    "support_label": {
+      "type": "string", 
+      "default": "Підтримка клієнтів"
+    },
+    "years_experience_label": {
+      "type": "string",
+      "default": "Років досвіду"
+    },
+    "contact_address_full": {
+      "type": "string",
+      "default": "м. Київ, вул. Микільсько-Слобідська, 4Д"
+    },
+    "footer_sites_title": {
+      "type": "string",
+      "default": "Офіційні сайти"
+    },
+    "footer_brands_title": {
+      "type": "string",
+      "default": "Наші бренди"
+    },
+    "footer_delivery_link": {
+      "type": "string",
+      "default": "Доставка та оплата"
+    },
+    "footer_warranty_link": {
+      "type": "string",
+      "default": "Гарантія та сервіс"
+    },
+    "footer_brand_gardena": {
+      "type": "string",
+      "default": "Gardena"
+    },
+    "footer_brand_fiskars": {
+      "type": "string", 
+      "default": "Fiskars"
+    },
+    "footer_brand_husqvarna": {
+      "type": "string",
+      "default": "Husqvarna"
+    },
+    "footer_brand_stihl": {
+      "type": "string",
+      "default": "Stihl"
+    },
+    "footer_contact_title": {
+      "type": "string",
+      "default": "Контакти"
+    },
+    "footer_social_facebook": {
+      "type": "string",
+      "default": "https://www.facebook.com/GShopUkraine"
+    },
+    "footer_social_instagram": {
+      "type": "string",
+      "default": "https://www.instagram.com/g.shop.ua/"
+    },
+    "footer_social_telegram": {
+      "type": "string",
+      "default": "https://t.me/Gardena_shop"
+    },
+    "footer_social_viber": {
+      "type": "string",
+      "default": "viber://chat?number=+380986594242"
+    },
+    "footer_site_gardena": {
+      "type": "string",
+      "default": "G-Shop Gardena"
+    },
+    "footer_site_fiskars": {
+      "type": "string",
+      "default": "Fiskars Garden"
+    },
+    "footer_site_husqvarna": {
+      "type": "string",
+      "default": "G-Shop Husqvarna"
+    },
+    "footer_site_gardena_url": {
+      "type": "string",
+      "default": "https://g-shop.com.ua/"
+    },
+    "footer_site_fiskars_url": {
+      "type": "string",
+      "default": "https://fiskars-garden.com.ua/"
+    },
+    "footer_site_husqvarna_url": {
+      "type": "string",
+      "default": "https://g-shop.ua/"
+    },
+    "catalog_gardena_url": {
+      "type": "string",
+      "default": "https://gardena.com.ua/catalog"
+    },
+    "catalog_fiskars_url": {
+      "type": "string",
+      "default": "https://fiskars-garden.com.ua/catalog"
+    },
+    "catalog_husqvarna_url": {
+      "type": "string",
+      "default": "https://g-shop.ua/catalog"
+    },
+    "catalog_gardena_button_text": {
+      "type": "string",
+      "default": "Переглянути каталог Gardena"
+    },
+    "catalog_fiskars_button_text": {
+      "type": "string",
+      "default": "Переглянути каталог Fiskars"
+    },
+    "catalog_husqvarna_button_text": {
+      "type": "string",
+      "default": "Переглянути каталог Husqvarna"
+    },
+    "catalog_links_target": {
+      "type": "enumeration",
+      "enum": ["_self", "_blank"],
+      "default": "_blank"
+    },
+    "category_links_target": {
+      "type": "enumeration",
+      "enum": ["_self", "_blank"],
+      "default": "_blank"
+    }
+  }
+}

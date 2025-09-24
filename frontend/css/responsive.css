@@ -1,0 +1,653 @@
+/* =============================================
+   RESPONSIVE CSS
+   Advanced responsive patterns and layouts
+   ============================================= */
+
+/* =============================================
+   1. MOBILE-FIRST BASE STYLES (320px+)
+   ============================================= */
+
+/* Container and Layout Base */
+.container {
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 var(--space-container);
+}
+
+/* Components Grid Base - Mobile First */
+.feature-grid,
+.product-grid,
+.stats-grid,
+.advantage-cards,
+.news-grid {
+  grid-template-columns: 1fr;
+}
+
+.contact-container {
+  grid-template-columns: 1fr;
+}
+
+.comparison-table {
+  overflow-x: auto;
+}
+
+.stat-number {
+  font-size: 2rem;
+}
+
+.testimonial-text {
+  padding: 0 1rem;
+}
+
+/* Small Mobile Specific */
+.feature-card,
+.product-card,
+.advantage-card,
+.news-card {
+  margin: 0 1rem;
+}
+
+.contact-form {
+  padding: 1.5rem;
+}
+
+/* Responsive Grid Base */
+.grid {
+  display: grid;
+  gap: var(--space-grid-gap);
+}
+
+.flex {
+  display: flex;
+  gap: var(--space-md);
+}
+
+/* Hide/Show Utilities */
+.mobile-only { display: block; }
+.tablet-only { display: none; }
+.desktop-only { display: none; }
+
+/* Mobile Navigation Pattern */
+.nav-mobile {
+  position: fixed;
+  top: 0;
+  left: -100%;
+  width: 80%;
+  max-width: 300px;
+  height: 100vh;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-xl);
+  transition: left var(--duration-normal) var(--ease-in-out);
+  z-index: var(--z-fixed);
+}
+
+.nav-mobile.active {
+  left: 0;
+}
+
+.mobile-menu-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+/* Touch-Friendly Targets */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* =============================================
+   2. SMALL MOBILE (480px+)
+   ============================================= */
+
+@media (min-width: 480px) {
+  .container {
+    max-width: var(--container-sm);
+  }
+  
+  /* Grid Adjustments */
+  .grid-sm-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .grid-sm-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  /* Flexbox Adjustments */
+  .flex-sm-row {
+    flex-direction: row;
+  }
+  
+  .flex-sm-col {
+    flex-direction: column;
+  }
+  
+  .flex-sm-wrap {
+    flex-wrap: wrap;
+  }
+}
+
+/* =============================================
+   3. TABLET (768px+)
+   ============================================= */
+
+@media (min-width: 768px) {
+  .container {
+    max-width: var(--container-md);
+  }
+  
+  /* Hide/Show Utilities */
+  .mobile-only { display: none; }
+  .tablet-only { display: block; }
+  .desktop-only { display: none; }
+  
+  /* Grid Systems */
+  .grid-md-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .grid-md-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .grid-md-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  /* Advanced Grid Patterns */
+  .grid-sidebar {
+    grid-template-columns: 250px 1fr;
+  }
+  
+  .grid-content {
+    grid-template-columns: 1fr 300px;
+  }
+  
+  /* Brand Section Grid */
+  .brand-grid {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: var(--space-xl);
+    align-items: start;
+  }
+  
+  /* Category Grid */
+  .category-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-lg);
+  }
+  
+  /* Navigation Patterns */
+  .nav-desktop {
+    display: flex;
+    gap: var(--space-lg);
+  }
+  
+  .mobile-menu-toggle {
+    display: none;
+  }
+  
+  /* Flexbox Utilities */
+  .flex-md-row {
+    flex-direction: row;
+  }
+  
+  .flex-md-col {
+    flex-direction: column;
+  }
+  
+  .flex-md-wrap {
+    flex-wrap: wrap;
+  }
+  
+  .flex-md-nowrap {
+    flex-wrap: nowrap;
+  }
+
+  /* Component Responsive Overrides */
+  .feature-grid {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  }
+  
+  .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+  
+  .advantage-cards {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+  
+  .news-grid {
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  }
+
+  .contact-container {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .stat-number {
+    font-size: 3rem;
+  }
+
+  .testimonial-text {
+    padding: 0 2rem;
+  }
+
+  .feature-card,
+  .product-card,
+  .advantage-card,
+  .news-card {
+    margin: 0;
+  }
+
+  .contact-form {
+    padding: 2rem;
+  }
+  
+  /* Spacing Overrides */
+  .md-mt-0 { margin-top: 0; }
+  .md-mt-lg { margin-top: var(--space-lg); }
+  .md-mb-0 { margin-bottom: 0; }
+  .md-mb-lg { margin-bottom: var(--space-lg); }
+  .md-p-lg { padding: var(--space-lg); }
+}
+
+/* =============================================
+   4. DESKTOP (1024px+)
+   ============================================= */
+
+@media (min-width: 1024px) {
+  .container {
+    max-width: var(--container-lg);
+  }
+  
+  /* Hide/Show Utilities */
+  .mobile-only { display: none; }
+  .tablet-only { display: none; }
+  .desktop-only { display: block; }
+  
+  /* Grid Systems */
+  .grid-lg-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .grid-lg-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .grid-lg-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .grid-lg-5 {
+    grid-template-columns: repeat(5, 1fr);
+  }
+  
+  .grid-lg-6 {
+    grid-template-columns: repeat(6, 1fr);
+  }
+  
+  /* Advanced Layouts */
+  .grid-asymmetric {
+    grid-template-columns: 2fr 1fr;
+  }
+  
+  .grid-featured {
+    grid-template-columns: 1fr 2fr 1fr;
+  }
+  
+  /* Brand Section Enhanced */
+  .brand-grid {
+    grid-template-columns: 250px 1fr;
+    gap: var(--space-2xl);
+  }
+  
+  /* Category Grid Enhanced */
+  .category-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-xl);
+  }
+  
+  /* Footer Grid */
+  .footer-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-xl);
+  }
+  
+  /* Hover States for Desktop */
+  .hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    transition: var(--transition-transform), var(--transition-shadow);
+  }
+  
+  .hover-scale:hover {
+    transform: scale(1.05);
+    transition: var(--transition-transform);
+  }
+  
+  .hover-shadow:hover {
+    box-shadow: var(--shadow-lg);
+    transition: var(--transition-shadow);
+  }
+  
+  /* Flexbox Utilities */
+  .flex-lg-row {
+    flex-direction: row;
+  }
+  
+  .flex-lg-col {
+    flex-direction: column;
+  }
+  
+  /* Spacing Overrides */
+  .lg-mt-0 { margin-top: 0; }
+  .lg-mt-xl { margin-top: var(--space-xl); }
+  .lg-mb-0 { margin-bottom: 0; }
+  .lg-mb-xl { margin-bottom: var(--space-xl); }
+  .lg-p-xl { padding: var(--space-xl); }
+}
+
+/* =============================================
+   5. LARGE DESKTOP (1200px+)
+   ============================================= */
+
+@media (min-width: 1200px) {
+  .container {
+    max-width: var(--container-xl);
+  }
+  
+  /* Grid Systems */
+  .grid-xl-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .grid-xl-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .grid-xl-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .grid-xl-5 {
+    grid-template-columns: repeat(5, 1fr);
+  }
+  
+  .grid-xl-6 {
+    grid-template-columns: repeat(6, 1fr);
+  }
+  
+  /* Brand Section Maximum */
+  .brand-grid {
+    grid-template-columns: 300px 1fr;
+    gap: var(--space-3xl);
+  }
+  
+  /* Category Grid Maximum */
+  .category-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-2xl);
+  }
+  
+  /* Complex Grid Patterns */
+  .grid-dashboard {
+    display: grid;
+    grid-template-columns: 250px 1fr 300px;
+    grid-template-areas:
+      "sidebar main aside"
+      "sidebar main aside";
+    gap: var(--space-xl);
+  }
+  
+  .grid-magazine {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: var(--space-lg);
+  }
+  
+  .span-xl-2 { grid-column: span 2; }
+  .span-xl-3 { grid-column: span 3; }
+  .span-xl-4 { grid-column: span 4; }
+  .span-xl-6 { grid-column: span 6; }
+  .span-xl-8 { grid-column: span 8; }
+  .span-xl-12 { grid-column: span 12; }
+  
+  /* Spacing Overrides */
+  .xl-mt-0 { margin-top: 0; }
+  .xl-mt-2xl { margin-top: var(--space-2xl); }
+  .xl-mb-0 { margin-bottom: 0; }
+  .xl-mb-2xl { margin-bottom: var(--space-2xl); }
+  .xl-p-2xl { padding: var(--space-2xl); }
+}
+
+/* =============================================
+   6. RESPONSIVE TYPOGRAPHY
+   ============================================= */
+
+/* Responsive Heading Sizes */
+h1 {
+  font-size: clamp(1.75rem, 1.5rem + 1.25vw, 2.5rem);
+  line-height: var(--line-height-tight);
+}
+
+h2 {
+  font-size: clamp(1.5rem, 1.3rem + 1vw, 2rem);
+  line-height: var(--line-height-tight);
+}
+
+h3 {
+  font-size: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem);
+  line-height: var(--line-height-snug);
+}
+
+h4 {
+  font-size: clamp(1.125rem, 1.05rem + 0.375vw, 1.25rem);
+  line-height: var(--line-height-snug);
+}
+
+h5 {
+  font-size: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+  line-height: var(--line-height-normal);
+}
+
+h6 {
+  font-size: clamp(0.875rem, 0.85rem + 0.125vw, 1rem);
+  line-height: var(--line-height-normal);
+}
+
+/* Responsive Text Utilities */
+@media (min-width: 768px) {
+  .md-text-sm { font-size: var(--font-size-sm); }
+  .md-text-base { font-size: var(--font-size-base); }
+  .md-text-lg { font-size: var(--font-size-lg); }
+  .md-text-xl { font-size: var(--font-size-xl); }
+}
+
+@media (min-width: 1024px) {
+  .lg-text-base { font-size: var(--font-size-base); }
+  .lg-text-lg { font-size: var(--font-size-lg); }
+  .lg-text-xl { font-size: var(--font-size-xl); }
+  .lg-text-xxl { font-size: var(--font-size-xxl); }
+}
+
+/* =============================================
+   7. RESPONSIVE IMAGES & MEDIA
+   ============================================= */
+
+/* Responsive Images */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.img-responsive {
+  width: 100%;
+  height: auto;
+}
+
+.img-cover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.img-contain {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Aspect Ratios */
+.aspect-square {
+  aspect-ratio: 1 / 1;
+}
+
+.aspect-video {
+  aspect-ratio: 16 / 9;
+}
+
+.aspect-portrait {
+  aspect-ratio: 3 / 4;
+}
+
+.aspect-landscape {
+  aspect-ratio: 4 / 3;
+}
+
+/* Responsive Video Container */
+.video-responsive {
+  position: relative;
+  padding-bottom: 56.25%; /* 16:9 */
+  height: 0;
+  overflow: hidden;
+}
+
+.video-responsive iframe,
+.video-responsive object,
+.video-responsive embed {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* =============================================
+   8. RESPONSIVE UTILITIES
+   ============================================= */
+
+/* Text Alignment */
+.text-left { text-align: left; }
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+
+@media (min-width: 768px) {
+  .md-text-left { text-align: left; }
+  .md-text-center { text-align: center; }
+  .md-text-right { text-align: right; }
+}
+
+@media (min-width: 1024px) {
+  .lg-text-left { text-align: left; }
+  .lg-text-center { text-align: center; }
+  .lg-text-right { text-align: right; }
+}
+
+/* Display Utilities */
+.d-none { display: none; }
+.d-block { display: block; }
+.d-inline { display: inline; }
+.d-inline-block { display: inline-block; }
+.d-flex { display: flex; }
+.d-grid { display: grid; }
+
+@media (min-width: 768px) {
+  .md-d-none { display: none; }
+  .md-d-block { display: block; }
+  .md-d-inline { display: inline; }
+  .md-d-inline-block { display: inline-block; }
+  .md-d-flex { display: flex; }
+  .md-d-grid { display: grid; }
+}
+
+@media (min-width: 1024px) {
+  .lg-d-none { display: none; }
+  .lg-d-block { display: block; }
+  .lg-d-inline { display: inline; }
+  .lg-d-inline-block { display: inline-block; }
+  .lg-d-flex { display: flex; }
+  .lg-d-grid { display: grid; }
+}
+
+/* Width Utilities */
+.w-25 { width: 25%; }
+.w-50 { width: 50%; }
+.w-75 { width: 75%; }
+.w-100 { width: 100%; }
+.w-auto { width: auto; }
+
+@media (min-width: 768px) {
+  .md-w-25 { width: 25%; }
+  .md-w-50 { width: 50%; }
+  .md-w-75 { width: 75%; }
+  .md-w-100 { width: 100%; }
+  .md-w-auto { width: auto; }
+}
+
+@media (min-width: 1024px) {
+  .lg-w-25 { width: 25%; }
+  .lg-w-50 { width: 50%; }
+  .lg-w-75 { width: 75%; }
+  .lg-w-100 { width: 100%; }
+  .lg-w-auto { width: auto; }
+}
+
+/* =============================================
+   9. PRINT STYLES
+   ============================================= */
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-only {
+    display: block !important;
+  }
+  
+  body {
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+  
+  h1 { font-size: 24pt; }
+  h2 { font-size: 20pt; }
+  h3 { font-size: 16pt; }
+  
+  a {
+    text-decoration: underline;
+  }
+  
+  a[href^="http"]:after {
+    content: " (" attr(href) ")";
+  }
+}

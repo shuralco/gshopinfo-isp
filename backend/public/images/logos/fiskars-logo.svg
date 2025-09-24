@@ -1,0 +1,20 @@
+<svg viewBox="0 0 240 60" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fiskars brand logo - professional representation -->
+  <defs>
+    <linearGradient id="fiskarsOrange" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff6900;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e55a00;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Scissors icon -->
+  <g transform="translate(15, 20)">
+    <path d="M5 10 L15 0 M5 10 L15 20 M15 0 L25 10 M15 20 L25 10" 
+          stroke="url(#fiskarsOrange)" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <circle cx="5" cy="10" r="3" fill="url(#fiskarsOrange)"/>
+    <circle cx="25" cy="10" r="3" fill="url(#fiskarsOrange)"/>
+  </g>
+  
+  <!-- Brand text -->
+  <text x="130" y="36" text-anchor="middle" fill="#ff6900" font-family="'Segoe UI', Arial, sans-serif" font-size="24" font-weight="700" letter-spacing="1.5">FISKARS</text>
+</svg>

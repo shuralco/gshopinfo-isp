@@ -1,0 +1,316 @@
+name: Deploy to Production (ISPManager)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      skip_health_check:
+        description: 'Skip health check after deployment'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  NODE_VERSION: '18'
+  SERVER_HOST: 167.235.7.222
+  DEPLOY_PATH: /var/www/pashland/data/www/g-shop.info
+  DEPLOY_USER: pashland
+
+jobs:
+  deploy:
+    name: Deploy to ISPManager Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: 🔑 Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ env.SERVER_HOST }} >> ~/.ssh/known_hosts
+          
+          # Create SSH config
+          cat >> ~/.ssh/config << EOF
+          Host ispmanager
+            HostName ${{ env.SERVER_HOST }}
+            User root
+            IdentityFile ~/.ssh/deploy_key
+            StrictHostKeyChecking no
+            ServerAliveInterval 60
+            ServerAliveCountMax 3
+          EOF
+
+      - name: 🧪 Test SSH connection
+        run: |
+          ssh ispmanager "echo 'SSH connection successful'"
+
+      - name: 📦 Install and build locally
+        run: |
+          echo "Installing backend dependencies..."
+          cd backend
+          npm ci
+          
+          echo "Building Strapi..."
+          npm run build
+          
+          cd ..
+          echo "Build completed successfully"
+
+      - name: 🚀 Deploy to server
+        run: |
+          echo "Starting deployment..."
+          
+          # Create deployment timestamp
+          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          TEMP_DIR="/tmp/deploy-${TIMESTAMP}"
+          
+          # Create remote temporary directory
+          ssh ispmanager "mkdir -p ${TEMP_DIR}"
+          
+          # Sync files to temporary location
+          echo "Syncing files to server..."
+          rsync -avz --delete \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='node_modules' \
+            --exclude='.env' \
+            --exclude='.env.*' \
+            --exclude='backend/node_modules' \
+            --exclude='backend/.env' \
+            --exclude='backend/.env.*' \
+            --exclude='backend/.tmp' \
+            --exclude='backend/.cache' \
+            --exclude='backend/build' \
+            --exclude='backend/public/uploads' \
+            --exclude='backend/database.db*' \
+            --exclude='backend/.strapi-updater.json' \
+            --exclude='frontend/node_modules' \
+            --exclude='frontend/.next' \
+            --exclude='*.log' \
+            --exclude='.DS_Store' \
+            -e ssh \
+            ./ ispmanager:${TEMP_DIR}/
+          
+          echo "Files synced to temporary directory"
+          
+          # Execute deployment script on server
+          ssh ispmanager << 'REMOTE_SCRIPT'
+          set -e
+          
+          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          TEMP_DIR="/tmp/deploy-${TIMESTAMP}"
+          DEPLOY_PATH="/var/www/pashland/data/www/g-shop.info"
+          BACKUP_PATH="/var/www/pashland/backups/gshop"
+          DEPLOY_USER="pashland"
+          
+          # Create backup directory
+          mkdir -p ${BACKUP_PATH}
+          
+          echo "=== Backing up current deployment ==="
+          
+          # Backup database
+          if [ -f "${DEPLOY_PATH}/backend/database.db" ]; then
+            echo "Backing up database..."
+            cp "${DEPLOY_PATH}/backend/database.db" "${BACKUP_PATH}/db_${TIMESTAMP}.db" || true
+            cp "${DEPLOY_PATH}/backend/database.db-shm" "${BACKUP_PATH}/db_${TIMESTAMP}.db-shm" 2>/dev/null || true
+            cp "${DEPLOY_PATH}/backend/database.db-wal" "${BACKUP_PATH}/db_${TIMESTAMP}.db-wal" 2>/dev/null || true
+          fi
+          
+          # Backup uploads
+          if [ -d "${DEPLOY_PATH}/backend/public/uploads" ]; then
+            echo "Backing up uploads..."
+            tar -czf "${BACKUP_PATH}/uploads_${TIMESTAMP}.tar.gz" \
+              -C "${DEPLOY_PATH}/backend/public" uploads 2>/dev/null || true
+          fi
+          
+          # Backup environment file
+          if [ -f "${DEPLOY_PATH}/backend/.env" ]; then
+            cp "${DEPLOY_PATH}/backend/.env" "${BACKUP_PATH}/env_${TIMESTAMP}" || true
+          fi
+          
+          echo "=== Stopping application ==="
+          
+          # Stop via ISPManager
+          if [ -f "/usr/local/mgr5/sbin/mgrctl" ]; then
+            /usr/local/mgr5/sbin/mgrctl -m ispmgr nodeapp.stop elid=g-shop.info 2>/dev/null || true
+          fi
+          
+          # Kill any remaining processes
+          pkill -f "node.*g-shop.info" 2>/dev/null || true
+          
+          # Remove socket
+          rm -f /var/www/pashland/data/nodejs/0.sock
+          
+          sleep 3
+          
+          echo "=== Preparing new deployment ==="
+          
+          # Find the most recent deployment directory
+          TEMP_DIR=$(ls -dt /tmp/deploy-* | head -1)
+          
+          cd ${TEMP_DIR}/backend
+          
+          # Install production dependencies
+          echo "Installing dependencies..."
+          npm ci --production
+          
+          # Copy environment and persistent data
+          if [ -f "${DEPLOY_PATH}/backend/.env" ]; then
+            echo "Copying environment configuration..."
+            cp "${DEPLOY_PATH}/backend/.env" "${TEMP_DIR}/backend/.env"
+          fi
+          
+          if [ -f "${DEPLOY_PATH}/backend/database.db" ]; then
+            echo "Copying database..."
+            cp "${DEPLOY_PATH}/backend/database.db" "${TEMP_DIR}/backend/"
+            cp "${DEPLOY_PATH}/backend/database.db-shm" "${TEMP_DIR}/backend/" 2>/dev/null || true
+            cp "${DEPLOY_PATH}/backend/database.db-wal" "${TEMP_DIR}/backend/" 2>/dev/null || true
+          fi
+          
+          if [ -d "${DEPLOY_PATH}/backend/public/uploads" ]; then
+            echo "Copying uploads..."
+            mkdir -p "${TEMP_DIR}/backend/public"
+            cp -r "${DEPLOY_PATH}/backend/public/uploads" "${TEMP_DIR}/backend/public/"
+          fi
+          
+          # Run prefetch script
+          echo "Running prefetch script..."
+          cd ${TEMP_DIR}
+          export STRAPI_API_URL="https://g-shop.info/api"
+          node scripts/prefetch-strapi.js || echo "Prefetch failed, continuing..."
+          
+          echo "=== Swapping deployments ==="
+          
+          # Backup old deployment
+          if [ -d "${DEPLOY_PATH}" ]; then
+            rm -rf "${DEPLOY_PATH}_old" 2>/dev/null || true
+            mv "${DEPLOY_PATH}" "${DEPLOY_PATH}_old"
+          fi
+          
+          # Move new deployment into place
+          mv "${TEMP_DIR}" "${DEPLOY_PATH}"
+          
+          # Set permissions
+          chown -R ${DEPLOY_USER}:${DEPLOY_USER} ${DEPLOY_PATH}
+          chmod 755 ${DEPLOY_PATH}
+          chmod 755 ${DEPLOY_PATH}/backend
+          
+          # Ensure socket directory exists
+          mkdir -p /var/www/pashland/data/nodejs
+          chown ${DEPLOY_USER}:${DEPLOY_USER} /var/www/pashland/data/nodejs
+          chmod 755 /var/www/pashland/data/nodejs
+          
+          echo "=== Starting application ==="
+          
+          # Start via ISPManager
+          if [ -f "/usr/local/mgr5/sbin/mgrctl" ]; then
+            /usr/local/mgr5/sbin/mgrctl -m ispmgr nodeapp.start elid=g-shop.info
+          else
+            # Fallback: manual start
+            su - ${DEPLOY_USER} -c "cd ${DEPLOY_PATH} && nohup node app.js > /dev/null 2>&1 &"
+          fi
+          
+          sleep 5
+          
+          # Verify deployment
+          if pgrep -f "node.*g-shop.info" > /dev/null; then
+            echo "Application started successfully!"
+            
+            # Cleanup
+            rm -rf "${DEPLOY_PATH}_old"
+            
+            # Clean old backups (keep last 5)
+            cd ${BACKUP_PATH}
+            ls -t db_*.db 2>/dev/null | tail -n +6 | xargs rm -f 2>/dev/null || true
+            ls -t uploads_*.tar.gz 2>/dev/null | tail -n +6 | xargs rm -f 2>/dev/null || true
+            
+            echo "=== Deployment completed successfully! ==="
+          else
+            echo "Application failed to start! Rolling back..."
+            
+            # Rollback
+            if [ -d "${DEPLOY_PATH}_old" ]; then
+              rm -rf "${DEPLOY_PATH}"
+              mv "${DEPLOY_PATH}_old" "${DEPLOY_PATH}"
+              
+              if [ -f "/usr/local/mgr5/sbin/mgrctl" ]; then
+                /usr/local/mgr5/sbin/mgrctl -m ispmgr nodeapp.start elid=g-shop.info
+              fi
+            fi
+            
+            exit 1
+          fi
+          REMOTE_SCRIPT
+
+      - name: 🏥 Health check
+        if: ${{ !inputs.skip_health_check }}
+        run: |
+          echo "Waiting for application to stabilize..."
+          sleep 10
+          
+          echo "Performing health checks..."
+          
+          # Check API endpoint
+          MAX_RETRIES=5
+          RETRY_COUNT=0
+          
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" https://g-shop.info/api || echo "000")
+            
+            if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "301" ] || [ "$HTTP_CODE" = "302" ]; then
+              echo "✅ API is responding (HTTP $HTTP_CODE)"
+              break
+            else
+              echo "⏳ API not ready yet (HTTP $HTTP_CODE), retrying..."
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+              sleep 5
+            fi
+          done
+          
+          if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+            echo "❌ Health check failed after $MAX_RETRIES attempts"
+            exit 1
+          fi
+          
+          # Check process on server
+          ssh ispmanager "pgrep -f 'node.*g-shop.info' > /dev/null && echo '✅ Node.js process is running' || (echo '❌ Node.js process not found' && exit 1)"
+
+      - name: 📊 Deployment summary
+        if: always()
+        run: |
+          echo "================================================"
+          echo "Deployment Summary"
+          echo "================================================"
+          echo "Repository: ${{ github.repository }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Triggered by: ${{ github.actor }}"
+          echo "Workflow: ${{ github.workflow }}"
+          echo "Status: ${{ job.status }}"
+          echo "================================================"
+          
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "🎉 Deployment successful!"
+            echo "🌐 Live at: https://g-shop.info"
+          else
+            echo "⚠️ Deployment failed. Please check the logs."
+          fi
+
+      - name: 🧹 Cleanup
+        if: always()
+        run: |
+          rm -f ~/.ssh/deploy_key
+          rm -f ~/.ssh/config

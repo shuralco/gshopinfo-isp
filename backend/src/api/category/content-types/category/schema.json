@@ -1,0 +1,73 @@
+{
+  "kind": "collectionType",
+  "collectionName": "categories",
+  "info": {
+    "singularName": "category",
+    "pluralName": "categories",
+    "displayName": "Category",
+    "description": "Категорії товарів для брендів. РЕКОМЕНДУЄМО: використовуйте емодзі замість SVG для простоти! 🌱💧🔧🪓✂️⚡🌿🤖🌳🚜"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "description": "Назва категорії (напр. Газонокосарки, Системи поливу)"
+    },
+    "icon_emoji": {
+      "type": "enumeration",
+      "enum": [
+        "sprout🌱",
+        "droplet💧", 
+        "wrench🔧",
+        "axe🔪",
+        "scissors✂️",
+        "bolt⚡",
+        "herb🌿",
+        "robot🤖",
+        "tree🌳",
+        "tractor🚜",
+        "house🏠",
+        "rose🌹",
+        "leaf🍃",
+        "hibiscus🌺",
+        "sunflower🌻",
+        "ear_of_rice🌾",
+        "clover🍀",
+        "hammer🔨",
+        "saw⚔️",
+        "toolbox🧰",
+        "gear⚙️",
+        "nut_and_bolt🔩",
+        "ruler📏"
+      ],
+      "required": true,
+      "description": "🎨 Оберіть іконку для категорії (назва показуватиме емодзі)"
+    },
+    "url": {
+      "type": "string",
+      "required": true,
+      "description": "Посилання на категорію (напр. https://gardena.com.ua/category)"
+    },
+    "brand": {
+      "type": "relation",
+      "relation": "manyToOne", 
+      "target": "api::brand.brand",
+      "inversedBy": "categories",
+      "required": true
+    },
+    "order": {
+      "type": "integer",
+      "default": 0,
+      "description": "Порядок відображення (0, 1, 2...)"
+    },
+    "is_external": {
+      "type": "boolean",
+      "default": true,
+      "description": "Чи посилання зовнішнє? (рекомендовано: так)"
+    }
+  }
+}

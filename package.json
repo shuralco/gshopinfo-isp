@@ -1,0 +1,22 @@
+{
+  "name": "g-shop-info",
+  "version": "1.0.0",
+  "description": "G-Shop Info deployment for ISPManager",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "start:strapi": "cd backend && npm start",
+    "prefetch": "node scripts/prefetch-strapi.js",
+    "build": "npm run prefetch && cd backend && npm run build",
+    "install:deps": "cd backend && npm install",
+    "pm2:start": "pm2 start isp-config.js",
+    "pm2:stop": "pm2 stop g-shop-strapi",
+    "pm2:restart": "pm2 restart g-shop-strapi"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=6.0.0"
+  },
+  "author": "",
+  "license": "MIT"
+}

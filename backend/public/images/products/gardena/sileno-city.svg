@@ -1,0 +1,8 @@
+<svg width="300" height="200" xmlns="http://www.w3.org/2000/svg">
+  <rect width="100%" height="100%" fill="#f0f0f0"/>
+  <rect x="50" y="50" width="200" height="100" fill="#F15922" rx="10"/>
+  <text x="150" y="105" text-anchor="middle" fill="white" font-family="Arial" font-size="16">Gardena SILENO</text>
+  <circle cx="150" cy="130" r="15" fill="white"/>
+  <circle cx="120" cy="155" r="8" fill="#333"/>
+  <circle cx="180" cy="155" r="8" fill="#333"/>
+</svg>

@@ -1,0 +1,11 @@
+<svg width="300" height="200" xmlns="http://www.w3.org/2000/svg">
+  <rect width="100%" height="100%" fill="#f0f0f0"/>
+  <circle cx="150" cy="100" r="60" fill="#F15922"/>
+  <text x="150" y="105" text-anchor="middle" fill="white" font-family="Arial" font-size="12">Micro-Drip</text>
+  <circle cx="100" cy="50" r="5" fill="#333"/>
+  <circle cx="120" cy="70" r="5" fill="#333"/>
+  <circle cx="140" cy="60" r="5" fill="#333"/>
+  <circle cx="160" cy="80" r="5" fill="#333"/>
+  <circle cx="180" cy="65" r="5" fill="#333"/>
+  <circle cx="200" cy="85" r="5" fill="#333"/>
+</svg>

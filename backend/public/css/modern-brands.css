@@ -1,0 +1,242 @@
+/* =============================================
+   MODERN BRANDS SECTION STYLES
+   ============================================= */
+
+/* Brands Section Container */
+.brands-section {
+  padding: var(--space-section) 0;
+  background: linear-gradient(135deg, var(--color-surface-soft) 0%, var(--color-surface) 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.brands-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    var(--color-border) 20%, 
+    var(--color-border) 80%, 
+    transparent 100%);
+}
+
+/* Brand Grid Layout */
+.brand-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-grid-gap);
+  padding: var(--space-container);
+  max-width: var(--container-xl);
+  margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+  .brand-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Brand Card Modern */
+.brand-card-modern {
+  background: var(--color-surface);
+  border-radius: var(--radius-xl);
+  padding: var(--space-lg);
+  position: relative;
+  transition: var(--transition-all);
+  cursor: pointer;
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+}
+
+.brand-card-modern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--color-gardena), var(--color-fiskars), var(--color-husqvarna));
+  transform: scaleX(0);
+  transition: transform var(--duration-normal) var(--ease-out);
+  transform-origin: left;
+}
+
+.brand-card-modern:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: transparent;
+}
+
+.brand-card-modern:hover::before {
+  transform: scaleX(1);
+}
+
+/* Brand Logo Container */
+.brand-logo-container {
+  width: 100%;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-md);
+  background: var(--color-surface-soft);
+  border-radius: var(--radius-lg);
+  transition: var(--transition-all);
+}
+
+.brand-card-modern:hover .brand-logo-container {
+  background: linear-gradient(135deg, 
+    var(--color-gardena-tint) 0%, 
+    var(--color-fiskars-tint) 50%, 
+    var(--color-husqvarna-tint) 100%);
+}
+
+.brand-logo-container img {
+  max-width: 80%;
+  max-height: 80%;
+  object-fit: contain;
+  filter: grayscale(0.2);
+  transition: var(--transition-all);
+}
+
+.brand-card-modern:hover .brand-logo-container img {
+  filter: grayscale(0);
+  transform: scale(1.05);
+}
+
+/* Brand Title Modern */
+.brand-title-modern {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-xs);
+  text-align: center;
+  transition: var(--transition-colors);
+}
+
+.brand-card-modern:hover .brand-title-modern {
+  background: linear-gradient(90deg, var(--color-gardena), var(--color-fiskars));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Category Title Modern */
+.category-title-modern {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  text-align: center;
+  margin-bottom: var(--space-sm);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wider);
+  opacity: 0.8;
+}
+
+/* Mega Menu Trigger Modern */
+.mega-menu-trigger-modern {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  transition: var(--transition-all);
+  cursor: pointer;
+  margin: 0 auto;
+  display: flex;
+  width: fit-content;
+}
+
+.mega-menu-trigger-modern:hover {
+  background: linear-gradient(135deg, var(--color-gardena), var(--color-fiskars));
+  color: var(--color-text-inverse);
+  border-color: transparent;
+  transform: translateX(4px);
+}
+
+.mega-menu-trigger-modern::after {
+  content: '→';
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+.mega-menu-trigger-modern:hover::after {
+  transform: translateX(4px);
+}
+
+/* Brand Section Animations */
+@keyframes brandCardEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.brand-card-modern {
+  animation: brandCardEntrance var(--duration-slow) var(--ease-out) backwards;
+}
+
+.brand-card-modern:nth-child(1) { animation-delay: 0ms; }
+.brand-card-modern:nth-child(2) { animation-delay: 100ms; }
+.brand-card-modern:nth-child(3) { animation-delay: 200ms; }
+.brand-card-modern:nth-child(4) { animation-delay: 300ms; }
+.brand-card-modern:nth-child(5) { animation-delay: 400ms; }
+.brand-card-modern:nth-child(6) { animation-delay: 500ms; }
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .brand-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+  }
+  
+  .brand-card-modern {
+    padding: var(--space-md);
+  }
+  
+  .brand-logo-container {
+    height: 100px;
+  }
+}
+
+/* Focus States for Accessibility */
+.brand-card-modern:focus-visible,
+.mega-menu-trigger-modern:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--color-focus-ring);
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  .brand-card-modern {
+    border-width: 2px;
+  }
+  
+  .brand-card-modern:hover {
+    border-color: var(--color-text-primary);
+  }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .brand-card-modern,
+  .brand-card-modern::before,
+  .brand-logo-container,
+  .brand-logo-container img,
+  .mega-menu-trigger-modern {
+    transition: none;
+    animation: none;
+  }
+}
