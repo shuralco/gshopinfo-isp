@@ -164,7 +164,7 @@ BrandLogoComponent.css
 # =========================
 simple-app.js
 isp-config.js
-app.js
+# app.js is needed for ISPManager - don't ignore it
 
 # =========================
 # MCP Servers (submodules)
