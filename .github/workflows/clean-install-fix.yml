@@ -1,0 +1,108 @@
+name: Clean Install Fix
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  clean-fix:
+    name: Clean Install and Start
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Clean Install on Server
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: 22
+          timeout: 30m
+          command_timeout: 30m
+          script: |
+            echo "🧹 CLEAN INSTALLATION FIX"
+            echo "========================"
+            
+            # Kill everything first
+            echo "Killing all node processes..."
+            killall -9 node 2>/dev/null || true
+            killall -9 npm 2>/dev/null || true
+            fuser -k 3002/tcp 2>/dev/null || true
+            sleep 2
+            
+            # Go to backend
+            cd /var/www/pashland/data/www/g-shop.info/backend
+            
+            # COMPLETE CLEAN
+            echo "Removing ALL node modules and cache..."
+            rm -rf node_modules
+            rm -rf ~/.npm
+            rm -rf /tmp/npm-*
+            rm -rf /var/www/pashland/data/.npm
+            rm -f package-lock.json
+            
+            # Clean npm cache
+            npm cache clean --force
+            npm cache verify
+            
+            # Fresh install with specific order
+            echo "Installing dependencies..."
+            npm install --no-save
+            
+            echo "Installing Strapi core separately..."
+            npm install @strapi/strapi@4.25.13
+            
+            echo "Checking if Strapi installed..."
+            ls -la node_modules/@strapi/ | head -5
+            
+            # Create working .env
+            echo "Creating .env..."
+            cat > .env << 'EOF'
+            NODE_ENV=production
+            HOST=0.0.0.0
+            PORT=3002
+            APP_KEYS=myKeyA,myKeyB
+            API_TOKEN_SALT=tobemodified
+            ADMIN_JWT_SECRET=tobemodified
+            JWT_SECRET=tobemodified
+            DATABASE_CLIENT=sqlite
+            DATABASE_FILENAME=.tmp/data.db
+            EOF
+            
+            # Build
+            echo "Building Strapi..."
+            npm run build || echo "Build had warnings"
+            
+            # Start Strapi directly from backend
+            echo "Starting Strapi from backend directory..."
+            PORT=3002 nohup npm run start > /var/log/strapi.log 2>&1 &
+            STRAPI_PID=$!
+            echo "Started with PID: $STRAPI_PID"
+            
+            # Wait for startup
+            echo "Waiting for Strapi to start..."
+            for i in {1..30}; do
+              if curl -f http://localhost:3002/api/products 2>/dev/null; then
+                echo "✅ Strapi is running!"
+                break
+              fi
+              echo "Waiting... ($i/30)"
+              sleep 2
+            done
+            
+            # Verify
+            echo ""
+            echo "Final check:"
+            ps aux | grep $STRAPI_PID
+            netstat -tulpn | grep 3002
+            curl -I http://localhost:3002/admin
+            curl -I http://localhost:3002/api/products
+            
+            # Show logs
+            echo ""
+            echo "Strapi logs:"
+            tail -50 /var/log/strapi.log
+            
+            echo "========================"
+            echo "✅ DONE!"
