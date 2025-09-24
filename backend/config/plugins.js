@@ -1,4 +1,9 @@
 module.exports = {
+  'users-permissions': {
+    config: {
+      jwtSecret: process.env.JWT_SECRET || 'QWJjMTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTI=',
+    },
+  },
   email: {
     config: {
       provider: 'nodemailer',
