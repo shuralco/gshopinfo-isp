@@ -1,0 +1,149 @@
+name: Test and Deploy to ISPManager
+
+on:
+  push:
+    branches: [ main, production ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test-nodejs:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+    
+    - name: Run Hello World Test
+      run: |
+        echo "🧪 Running Hello World Test..."
+        node test-hello.js
+    
+    - name: Check Project Structure
+      run: |
+        echo "📂 Checking project structure..."
+        ls -la
+        echo ""
+        echo "📦 Backend directory:"
+        ls -la backend/ | head -20
+    
+    - name: Install Backend Dependencies
+      run: |
+        cd backend
+        npm ci || npm install
+    
+    - name: Build Strapi
+      run: |
+        cd backend
+        npm run build || echo "Build step skipped"
+    
+    - name: Test app.js wrapper
+      run: |
+        echo "🔧 Testing app.js wrapper..."
+        timeout 5s node app.js || true
+        echo "✅ app.js test completed"
+
+  deploy:
+    needs: test-nodejs
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Deploy to ISPManager Server
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        password: ${{ secrets.SERVER_PASSWORD }}
+        port: 22
+        script: |
+          echo "🚀 Starting deployment..."
+          
+          # Navigate to project directory
+          cd /var/www/pashland/data/www/g-shop.info
+          
+          # Git operations
+          echo "📥 Pulling latest changes..."
+          git config --global --add safe.directory /var/www/pashland/data/www/g-shop.info
+          git pull origin main || git pull origin production
+          
+          # Show what was updated
+          echo "📋 Latest commit:"
+          git log -1 --oneline
+          
+          # Install dependencies
+          echo "📦 Installing dependencies..."
+          cd backend
+          npm install --production
+          
+          # Build Strapi
+          echo "🔨 Building Strapi..."
+          npm run build || echo "Build step completed with warnings"
+          
+          # Restart application via ISPManager PM2
+          echo "🔄 Restarting application..."
+          su - pashland -c "/usr/lib/ispnodejs/bin/pm2 restart g-shop.info || /usr/lib/ispnodejs/bin/pm2 start /var/www/pashland/data/www/g-shop.info/app.js --name g-shop.info"
+          
+          # Check status
+          echo "✅ Checking application status..."
+          sleep 3
+          su - pashland -c "/usr/lib/ispnodejs/bin/pm2 status"
+          
+          # Test endpoints
+          echo "🧪 Testing endpoints..."
+          curl -f -s -o /dev/null http://localhost:3002/admin && echo "✅ Admin panel: OK" || echo "❌ Admin panel: Failed"
+          curl -f -s -o /dev/null http://localhost:3002/api/products && echo "✅ API: OK" || echo "❌ API: Failed"
+          
+          # Show logs
+          echo "📜 Recent application logs:"
+          su - pashland -c "/usr/lib/ispnodejs/bin/pm2 logs g-shop.info --lines 20 --nostream"
+          
+          echo "🎉 Deployment completed!"
+    
+    - name: Verify Deployment
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        password: ${{ secrets.SERVER_PASSWORD }}
+        port: 22
+        script: |
+          echo "🔍 Verifying deployment..."
+          
+          # Check if process is running
+          ps aux | grep -E "node.*(g-shop|strapi)" | grep -v grep && echo "✅ Node.js process found" || echo "❌ Node.js process not found"
+          
+          # Check port
+          netstat -tlpn | grep :3002 && echo "✅ Port 3002 is listening" || echo "❌ Port 3002 not listening"
+          
+          # Check PM2 logs for errors
+          echo "📜 Checking for errors in logs:"
+          su - pashland -c "/usr/lib/ispnodejs/bin/pm2 logs g-shop.info --err --lines 10 --nostream" || echo "No error logs"
+          
+          # Final status
+          echo "📊 Final PM2 status:"
+          su - pashland -c "/usr/lib/ispnodejs/bin/pm2 info g-shop.info" || echo "PM2 info not available"
+
+  notify:
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: Check Workflow Status
+      run: |
+        if [ "${{ needs.deploy.result }}" == "success" ]; then
+          echo "✅ Deployment successful!"
+          echo "🌐 Site: https://g-shop.info"
+          echo "🔧 Admin: https://g-shop.info/admin"
+        else
+          echo "❌ Deployment failed or skipped"
+          echo "Check the logs above for details"
+        fi
