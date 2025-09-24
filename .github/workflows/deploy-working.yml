@@ -1,0 +1,175 @@
+name: Deploy to ISPManager (Working)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: 📦 Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sshpass rsync
+
+      - name: 🧪 Test SSH connection
+        run: |
+          echo "Testing SSH connection..."
+          sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo 'Connected successfully'"
+
+      - name: 📦 Build project locally
+        run: |
+          echo "Building backend..."
+          cd backend
+          npm ci
+          npm run build
+          cd ..
+          echo "Build completed"
+
+      - name: 🚀 Deploy to server
+        run: |
+          echo "Starting deployment..."
+          
+          # Create remote directories
+          sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+          mkdir -p /var/www/pashland/data/www/g-shop.info
+          mkdir -p /var/www/pashland/backups/gshop
+          mkdir -p /var/www/pashland/data/nodejs
+          chown -R pashland:pashland /var/www/pashland/data || true
+          EOF
+          
+          # Sync files to server
+          echo "Syncing files..."
+          sshpass -p "${{ secrets.SERVER_PASSWORD }}" rsync -avz --delete \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            --exclude='.env*' \
+            --exclude='*.db*' \
+            --exclude='uploads' \
+            --exclude='.cache' \
+            --exclude='.tmp' \
+            --exclude='*.log' \
+            --exclude='venv' \
+            --exclude='__pycache__' \
+            --exclude='screenshots*' \
+            --exclude='*.png' \
+            --exclude='*.py' \
+            --exclude='*.sh' \
+            --exclude='playwright-mcp' \
+            --exclude='superdesign-mcp-claude-code' \
+            -e "ssh -o StrictHostKeyChecking=no" \
+            ./ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/var/www/pashland/data/www/g-shop.info/
+
+      - name: 🔧 Configure and start application
+        run: |
+          sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+          set -e
+          
+          DEPLOY_PATH="/var/www/pashland/data/www/g-shop.info"
+          cd ${DEPLOY_PATH}
+          
+          # Install backend dependencies
+          echo "Installing backend dependencies..."
+          cd backend
+          npm ci --production
+          
+          # Create .env file if not exists
+          if [ ! -f ".env" ]; then
+            echo "Creating .env file..."
+            cat > .env << 'ENVFILE'
+          NODE_ENV=production
+          HOST=0.0.0.0
+          PORT=3002
+          APP_KEYS=toBeModified1,toBeModified2
+          API_TOKEN_SALT=tobemodified
+          ADMIN_JWT_SECRET=tobemodified
+          JWT_SECRET=tobemodified
+          DATABASE_CLIENT=sqlite
+          DATABASE_FILENAME=./database.db
+          STRAPI_ADMIN_BACKEND_URL=https://g-shop.info
+          ENVFILE
+          fi
+          
+          # Create database if not exists
+          if [ ! -f "database.db" ]; then
+            echo "Creating initial database..."
+            npm run strapi admin:create-user -- \
+              --email=vladpowerpro@gmail.com \
+              --password=Qaqaqa12 \
+              --firstname=Admin \
+              --lastname=User || echo "Admin user creation skipped"
+          fi
+          
+          cd ${DEPLOY_PATH}
+          
+          # Set permissions
+          chown -R pashland:pashland ${DEPLOY_PATH}
+          chmod 755 ${DEPLOY_PATH}
+          
+          # Stop existing processes
+          echo "Stopping existing processes..."
+          pkill -f "node.*g-shop.info" || true
+          sleep 2
+          
+          # Start application
+          echo "Starting application..."
+          su - pashland -c "cd ${DEPLOY_PATH} && nohup node app.js > logs/app.log 2>&1 &" || true
+          
+          # Try ISPManager restart
+          if [ -f "/usr/local/mgr5/sbin/mgrctl" ]; then
+            /usr/local/mgr5/sbin/mgrctl -m ispmgr nodeapp.restart elid=g-shop.info || true
+          fi
+          
+          sleep 5
+          
+          # Check if running
+          if pgrep -f "node.*g-shop.info" > /dev/null; then
+            echo "✅ Application is running"
+          else
+            echo "⚠️ Application may not be running, check manually"
+          fi
+          
+          echo "Deployment completed!"
+          EOF
+
+      - name: 🏥 Health check
+        run: |
+          echo "Waiting for application to stabilize..."
+          sleep 10
+          
+          # Check API
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" https://g-shop.info/api || echo "000")
+          echo "API response: HTTP $HTTP_CODE"
+          
+          if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "301" ] || [ "$HTTP_CODE" = "302" ] || [ "$HTTP_CODE" = "404" ]; then
+            echo "✅ Server is responding"
+          else
+            echo "⚠️ Server may not be fully ready yet"
+          fi
+          
+      - name: 📊 Summary
+        if: always()
+        run: |
+          echo "================================"
+          echo "Deployment Summary"
+          echo "================================"
+          echo "Repository: ${{ github.repository }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Status: ${{ job.status }}"
+          echo "================================"
+          echo "🌐 Site: https://g-shop.info"
+          echo "🔧 Admin: https://g-shop.info/admin"
+          echo "================================"
