@@ -86,6 +86,10 @@ jobs:
           cd backend
           npm ci --production || npm install --production
           
+          # Ensure Strapi is installed
+          echo "Ensuring Strapi core packages are installed..."
+          npm install @strapi/strapi@4.25.13 @strapi/plugin-users-permissions@4.25.13 @strapi/plugin-i18n@4.25.13 @strapi/plugin-cloud@4.25.13 --production
+          
           # Create .env file if not exists
           if [ ! -f ".env" ]; then
             echo "Creating .env file..."
