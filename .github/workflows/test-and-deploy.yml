@@ -87,9 +87,23 @@ jobs:
           echo "🔨 Building Strapi..."
           npm run build || echo "Build step completed with warnings"
           
-          # Restart application via ISPManager PM2
-          echo "🔄 Restarting application..."
-          su - pashland -c "/usr/lib/ispnodejs/bin/pm2 restart g-shop.info || /usr/lib/ispnodejs/bin/pm2 start /var/www/pashland/data/www/g-shop.info/app.js --name g-shop.info"
+          # Restart application with ISPManager Node.js
+          echo "🔄 Restarting application with ISPManager Node.js..."
+          
+          # Kill old processes
+          pkill -f "node.*g-shop.info" || true
+          pkill -f "node.*strapi" || true
+          sleep 2
+          
+          # Use ISPManager's NVM Node.js
+          export NODE_PATH=/var/www/pashland/data/.nvm/versions/node/v18.20.8/bin/node
+          export NPM_PATH=/var/www/pashland/data/.nvm/versions/node/v18.20.8/bin/npm
+          
+          # Start via pashland user
+          su - pashland -c "cd /var/www/pashland/data/www/g-shop.info && /var/www/pashland/data/.nvm/versions/node/v18.20.8/bin/node app.js > /tmp/strapi-github.log 2>&1 &"
+          
+          # Try PM2 as backup
+          su - pashland -c "/usr/lib/ispnodejs/bin/pm2 restart g-shop.info 2>/dev/null || /usr/lib/ispnodejs/bin/pm2 start /var/www/pashland/data/www/g-shop.info/app.js --name g-shop.info 2>/dev/null" || true
           
           # Check status
           echo "✅ Checking application status..."

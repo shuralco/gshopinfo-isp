@@ -124,9 +124,18 @@ jobs:
           pkill -f "node.*g-shop.info" || true
           sleep 2
           
-          # Start application
-          echo "Starting application..."
-          su - pashland -c "cd ${DEPLOY_PATH} && nohup node app.js > logs/app.log 2>&1 &" || true
+          # Start application with ISPManager Node.js
+          echo "Starting application with ISPManager Node.js..."
+          
+          # Use ISPManager's NVM Node.js path
+          export NODE_PATH=/var/www/pashland/data/.nvm/versions/node/v18.20.8/bin/node
+          export NPM_PATH=/var/www/pashland/data/.nvm/versions/node/v18.20.8/bin/npm
+          
+          # Start via pashland user with correct paths
+          su - pashland -c "cd ${DEPLOY_PATH} && /var/www/pashland/data/.nvm/versions/node/v18.20.8/bin/node app.js > /tmp/strapi-deploy.log 2>&1 &" || true
+          
+          # Alternative: Try PM2 restart
+          su - pashland -c "/usr/lib/ispnodejs/bin/pm2 restart g-shop.info 2>/dev/null || /usr/lib/ispnodejs/bin/pm2 start ${DEPLOY_PATH}/app.js --name g-shop.info 2>/dev/null" || true
           
           # Try ISPManager restart
           if [ -f "/usr/local/mgr5/sbin/mgrctl" ]; then
